@@ -4,31 +4,73 @@ module Model
     , render
     ) where
 
-import           Data.Vector.Storable            (Vector)
-import           Graphics.LWGL                   (BufferUsage (..), GLfloat,
-                                                  GLuint, Mesh (..), Program,
-                                                  ShaderType (..), Texture,
-                                                  TextureFormat (..))
-import qualified Graphics.LWGL                   as GL
-import qualified Graphics.LWGL.Vertex_P_Norm_Tex as VTN
+import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Location,
+                                Mesh (..), Program, ShaderType (..), Texture,
+                                TextureFormat (..), VertexArrayObject (..))
+import qualified Graphics.LWGL as GL
 import           Graphics.OBJ
-import           Linear                          (M44)
+import           Linear        (M44, (!*!))
 
-import           ModelSpec                       (ModelSpec)
-import qualified ModelSpec                       as Spec
+import           ModelSpec     (ModelSpec)
+import qualified ModelSpec     as Spec
 
 data Model = Model
     { program :: !Program
+    , mvpLoc  :: !Location
     , mesh    :: !Mesh
     , texture :: !(Maybe Texture)
     , bumpMap :: !(Maybe Texture)
     } deriving Show
 
 loadModel :: FilePath -> IO (Either String Model)
-loadModel = undefined
+loadModel file = do
+    model <- Spec.fromFile file
+    case model of
+        Right (Spec.ModelSpec _ (Just _) Nothing) -> do
+            let Right model' = model
+            es <- expandEithers <$> programFromFile model'
+                                <*> meshFromFile model'
+                                <*> loadTextureFromFile model'
+            case es of
+                Right (program', mesh', texture') -> do
+
+                    mvpLoc' <- GL.glGetUniformLocation program' "mvp"
+
+                    GL.glBindVertexArray (VertexArrayObject 0)
+
+                    return $ Right Model
+                        { program = program'
+                        , mvpLoc = mvpLoc'
+                        , mesh = mesh'
+                        , texture = Just texture'
+                        , bumpMap = Nothing
+                        }
+
+                Left err -> return $ Left err
+
+        Right _ ->
+            return $ Left "Not supported"
+
+        Left err -> return $ Left err
+
+expandEithers :: Either String Program
+              -> Either String Mesh
+              -> Either String Texture
+              -> Either String (Program, Mesh, Texture)
+expandEithers eProgram eMesh eTexture =
+    (,,) <$> eProgram <*> eMesh <*> eTexture
 
 render :: M44 GLfloat -> M44 GLfloat -> Model -> IO ()
-render = undefined
+render projection view model = do
+    GL.glUseProgram (program model)
+    GL.glBindVertexArray (vao $ mesh model)
+
+    let mvp = projection !*! view
+    GL.setMatrix4 (mvpLoc model) mvp
+    GL.drawTrianglesVector (indices $ mesh model)
+
+    GL.glBindVertexArray (VertexArrayObject 0)
+
 
 meshFromFile :: ModelSpec -> IO (Either String Mesh)
 meshFromFile model = do
@@ -41,9 +83,10 @@ meshFromFile model = do
 programFromFile :: ModelSpec -> IO (Either String Program)
 programFromFile spec =
     case (Spec.texture spec, Spec.bumpMap spec) of
-        (Just _, Nothing) -> GL.loadShaders [ (VertexShader, "shaders/fullmodel.vert")
-                                            , (FragmentShader, "shaders/fullmodel.frag")
-                                            ]
+        (Just _, Nothing) ->
+            GL.loadShaders [ (VertexShader, "shaders/texturedmodel.vert")
+                           , (FragmentShader, "shaders/texturedmodel.frag")
+                           ]
         _                 -> return $ Left "Not supported yet"
 
 loadTextureFromFile :: ModelSpec -> IO (Either String Texture)

@@ -1,6 +1,7 @@
 module Main where
 
 import           Control.Monad    (unless, when)
+import           Data.Either      (isLeft)
 import           Data.IORef       (IORef, newIORef, readIORef, writeIORef)
 import           Data.Maybe       (fromJust, isNothing)
 import           Graphics.LWGL    as GL
@@ -13,11 +14,13 @@ import           Linear
 import           System.Exit      (exitFailure)
 
 import           EventLoop        (eventLoop)
+import           Model            (Model, loadModel, render)
 
 data RenderState = RenderState
     { projection :: !(M44 GLfloat)
     , view       :: !(M44 GLfloat)
     , cameraPos  :: !(V3 GLfloat)
+    , model      :: !Model
     } deriving Show
 
 createGLContext :: IO Window
@@ -42,14 +45,23 @@ createGLContext = do
 
     return $ fromJust window
 
-createRenderState :: IO (IORef RenderState)
-createRenderState = do
+createRenderState :: FilePath -> IO (IORef RenderState)
+createRenderState file = do
+    eModel <- loadModel file
+    when (isLeft eModel) $ do
+        let Left err = eModel
+        putStrLn err
+        GLFW.terminate
+        exitFailure
+    let Right model' = eModel
+
     let pos = V3 0 2 10
         state =
             RenderState
                 { projection = makeProjection
                 , view = makeView pos
                 , cameraPos = pos
+                , model = model'
                 }
     newIORef state
 
@@ -59,18 +71,22 @@ main = do
     GLFW.makeContextCurrent (Just window)
     GLFW.setStickyKeysInputMode window StickyKeysInputMode'Enabled
 
-    state <- createRenderState
+    ref <- createRenderState "example-files/brickcube.json"
 
-    GL.glClearColor 1 1 1 1
+    GL.glClearColor 1 1 1 0
     GL.glEnable DepthTest
+    GL.glPolygonMode FrontAndBack Line
 
-    eventLoop window $ renderScene state
+    eventLoop window $ renderScene ref
 
     GLFW.terminate
 
 renderScene :: IORef RenderState -> IO ()
-renderScene ref =
+renderScene ref = do
+    state <- readIORef ref
+
     GL.glClear [ColorBuffer, DepthBuffer]
+    render (projection state) (view state) (model state)
 
 width :: Int
 width = 1280
