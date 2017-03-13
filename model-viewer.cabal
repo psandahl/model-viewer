@@ -18,6 +18,7 @@ executable model-viewer
   main-is:             Main.hs
   other-modules:       Camera
                        EventLoop
+                       Input
                        Model
                        ModelSpec
                        RenderState
