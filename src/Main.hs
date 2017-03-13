@@ -15,6 +15,7 @@ import           System.Exit      (exitFailure)
 
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
+import           Input            (initInput)
 import           Model            (Model, loadModel, render)
 import           RenderState      (RenderState (..))
 
@@ -69,6 +70,8 @@ main = do
     GL.glClearColor 1 1 1 0
     GL.glEnable DepthTest
     GL.glPolygonMode FrontAndBack Line
+
+    initInput window ref
 
     eventLoop window $ renderScene ref
 
