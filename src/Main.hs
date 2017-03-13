@@ -13,15 +13,10 @@ import qualified Graphics.UI.GLFW as GLFW
 import           Linear
 import           System.Exit      (exitFailure)
 
+import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Model            (Model, loadModel, render)
-
-data RenderState = RenderState
-    { projection :: !(M44 GLfloat)
-    , view       :: !(M44 GLfloat)
-    , cameraPos  :: !(V3 GLfloat)
-    , model      :: !Model
-    } deriving Show
+import           RenderState      (RenderState (..))
 
 createGLContext :: IO Window
 createGLContext = do
@@ -53,14 +48,12 @@ createRenderState file = do
         putStrLn err
         GLFW.terminate
         exitFailure
-    let Right model' = eModel
 
-    let pos = V3 0 2 10
+    let Right model' = eModel
         state =
             RenderState
                 { projection = makeProjection
-                , view = makeView pos
-                , cameraPos = pos
+                , camera = initCamera
                 , model = model'
                 }
     newIORef state
@@ -86,7 +79,7 @@ renderScene ref = do
     state <- readIORef ref
 
     GL.glClear [ColorBuffer, DepthBuffer]
-    render (projection state) (view state) (model state)
+    render (projection state) (view $ camera state) (model state)
 
 width :: Int
 width = 1280
