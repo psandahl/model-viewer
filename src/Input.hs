@@ -50,15 +50,15 @@ cursorPosCallback ref _win x y = do
             Just (oldX, oldY) -> do
                 let oldPos = V2 oldX oldY
                     newPos = V2 x' y'
-                    --change = axisChange oldPos newPos
-                    change = normalize (V3 1 1 0)
+                    change = 0.05 * axisChange oldPos newPos
+                    --change = 0.01 * normalize (V3 1 1 0)
                 print "---"
                 print change
                 print (axis $ model state)
                 writeIORef ref state { model = changeRotation change 0.001 $ model state
                                      , mousePos = Just (x', y')
                                      }
-                print (axis $ changeRotation change 0.001 $ model state)
+                print (axis $ changeRotation change 0.01 $ model state)
             Nothing -> writeIORef ref state { mousePos = Just (x', y')}
 
     -- Button not pressed. Just force Nothing to position.
