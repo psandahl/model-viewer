@@ -9,7 +9,8 @@ import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Location,
                                 TextureFormat (..), VertexArrayObject (..))
 import qualified Graphics.LWGL as GL
 import           Graphics.OBJ
-import           Linear        (M44, (!*!))
+import           Linear        (M44, axisAngle, identity, mkTransformation,
+                                (!*!))
 
 import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
@@ -20,6 +21,7 @@ data Model = Model
     , mesh    :: !Mesh
     , texture :: !(Maybe Texture)
     , bumpMap :: !(Maybe Texture)
+    , matrix  :: !(M44 GLfloat)
     } deriving Show
 
 loadModel :: FilePath -> IO (Either String Model)
@@ -44,6 +46,7 @@ loadModel file = do
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
+                        , matrix = identity
                         }
 
                 Left err -> return $ Left err
@@ -65,7 +68,7 @@ render projection view model = do
     GL.glUseProgram (program model)
     GL.glBindVertexArray (vao $ mesh model)
 
-    let mvp = projection !*! view
+    let mvp = projection !*! view !*! (matrix model)
     GL.setMatrix4 (mvpLoc model) mvp
     GL.drawTrianglesVector (indices $ mesh model)
 
@@ -95,8 +98,9 @@ loadTextureFromFile spec =
         Just f  -> GL.loadTexture2D RGB8 True f
         Nothing -> return $ Left "No file specified"
 
-loadBumpMapFromFile :: ModelSpec -> IO (Either String Texture)
+{-loadBumpMapFromFile :: ModelSpec -> IO (Either String Texture)
 loadBumpMapFromFile spec =
     case Spec.bumpMap spec of
         Just f  -> GL.loadTexture2D RGB8 False f
         Nothing -> return $ Left "No file specified"
+-}
