@@ -13,7 +13,7 @@ import           Linear           (V2 (..), V3 (..), distance, normalize)
 import           Text.Printf      (printf)
 
 import           Camera           (moveBackward, moveForward)
-import           Model            (changeRotation)
+import           Model            (Model (..), changeRotation)
 import           RenderState      (RenderState (..))
 
 initInput :: Window -> IORef RenderState -> IO ()
@@ -50,10 +50,15 @@ cursorPosCallback ref _win x y = do
             Just (oldX, oldY) -> do
                 let oldPos = V2 oldX oldY
                     newPos = V2 x' y'
-                    change = axisChange oldPos newPos
-                writeIORef ref state { model = changeRotation change 0.01 $ model state
+                    --change = axisChange oldPos newPos
+                    change = normalize (V3 1 1 0)
+                print "---"
+                print change
+                print (axis $ model state)
+                writeIORef ref state { model = changeRotation change 0.001 $ model state
                                      , mousePos = Just (x', y')
                                      }
+                print (axis $ changeRotation change 0.001 $ model state)
             Nothing -> writeIORef ref state { mousePos = Just (x', y')}
 
     -- Button not pressed. Just force Nothing to position.
