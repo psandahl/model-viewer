@@ -2,8 +2,8 @@ module Input
     ( initInput
     ) where
 
-import           Control.Monad    (when)
-import           Data.IORef       (IORef, modifyIORef)
+import           Control.Monad    (unless, when)
+import           Data.IORef       (IORef, modifyIORef, readIORef, writeIORef)
 import           Graphics.LWGL    (GLfloat)
 import           Graphics.UI.GLFW (ModifierKeys, MouseButton (..),
                                    MouseButtonState (..), Window)
@@ -13,6 +13,7 @@ import           Linear           (V2 (..), V3 (..), distance, normalize)
 import           Text.Printf      (printf)
 
 import           Camera           (moveBackward, moveForward)
+import           Model            (changeRotation)
 import           RenderState      (RenderState (..))
 
 initInput :: Window -> IORef RenderState -> IO ()
@@ -40,10 +41,26 @@ mouseButtonCallback ref _window button buttonState _keys =
             state { mouseDown = buttonState == MouseButtonState'Pressed }
 
 cursorPosCallback :: IORef RenderState -> Window -> Double -> Double -> IO ()
-cursorPosCallback _ref _win x y =
-    printf "X=%f, Y=%f\n" x y
+cursorPosCallback ref _win x y = do
+    state <- readIORef ref
+    when (mouseDown state) $ do
+        let x' = realToFrac x
+            y' = realToFrac y
+        case mousePos state of
+            Just (oldX, oldY) -> do
+                let oldPos = V2 oldX oldY
+                    newPos = V2 x' y'
+                    change = axisChange oldPos newPos
+                writeIORef ref state { model = changeRotation change 0.01 $ model state
+                                     , mousePos = Just (x', y')
+                                     }
+            Nothing -> writeIORef ref state { mousePos = Just (x', y')}
+
+    -- Button not pressed. Just force Nothing to position.
+    unless (mouseDown state) $
+        writeIORef ref state { mousePos = Nothing }
 
 axisChange :: V2 GLfloat -> V2 GLfloat -> V3 GLfloat
 axisChange oldPos newPos =
     let (V2 x y) = newPos - oldPos
-    in normalize $ V3 (abs y) (abs x) 0
+    in normalize $ V3 y x 0

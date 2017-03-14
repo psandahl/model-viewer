@@ -57,6 +57,7 @@ createRenderState file = do
                 , camera = initCamera
                 , model = model'
                 , mouseDown = False
+                , mousePos = Nothing
                 }
     newIORef state
 

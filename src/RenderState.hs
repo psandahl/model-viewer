@@ -13,4 +13,5 @@ data RenderState = RenderState
     , model      :: !Model
     , camera     :: !Camera
     , mouseDown  :: !Bool
+    , mousePos   :: !(Maybe (GLfloat, GLfloat))
     } deriving Show
