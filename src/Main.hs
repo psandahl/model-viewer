@@ -56,6 +56,8 @@ createRenderState file = do
                 { projection = makeProjection
                 , camera = initCamera
                 , model = model'
+                , timestamp = 0
+                , frameDuration = 0
                 }
     newIORef state
 
@@ -73,16 +75,28 @@ main = do
 
     initInput window ref
 
-    eventLoop window $ renderScene ref
+    eventLoop window $ renderFrame ref
 
     GLFW.terminate
 
-renderScene :: IORef RenderState -> IO ()
-renderScene ref = do
+-- | Render one frame. This one is invoked after events are handled.
+renderFrame :: IORef RenderState -> IO ()
+renderFrame ref = do
     state <- readIORef ref
 
+    -- Render stuff with the current state.
     GL.glClear [ColorBuffer, DepthBuffer]
     render (projection state) (view $ camera state) (model state)
+
+    -- Update the timestamp and duration for the state.
+    mTime <- GLFW.getTime
+    case mTime of
+        Just time -> do
+            let state' = state { frameDuration = time - (timestamp state)
+                               , timestamp = time
+                               }
+            writeIORef ref state'
+        Nothing -> putStrLn "Error: Cannot read time"
 
 width :: Int
 width = 1280

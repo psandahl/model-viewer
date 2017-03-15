@@ -9,7 +9,9 @@ import           Camera        (Camera)
 import           Model         (Model)
 
 data RenderState = RenderState
-    { projection :: !(M44 GLfloat)
-    , model      :: !Model
-    , camera     :: !Camera
+    { projection    :: !(M44 GLfloat)
+    , model         :: !Model
+    , camera        :: !Camera
+    , timestamp     :: !Double
+    , frameDuration :: !Double
     } deriving Show
