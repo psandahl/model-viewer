@@ -93,7 +93,7 @@ renderFrame ref = do
     mTime <- GLFW.getTime
     case mTime of
         Just time -> do
-            let state' = state { frameDuration = time - (timestamp state)
+            let state' = state { frameDuration = time - timestamp state
                                , timestamp = time
                                }
             writeIORef ref state'

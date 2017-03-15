@@ -59,7 +59,7 @@ mouseButtonCallback ref window button buttonState _modKeys = do
             state { mousePosition = Just pos }
 
     -- Release left mouse button.
-    when (button == MouseButton'1 && buttonState == MouseButtonState'Released) $ do
+    when (button == MouseButton'1 && buttonState == MouseButtonState'Released) $
         modifyIORef ref $ \state ->
             state { mousePosition = Nothing }
 

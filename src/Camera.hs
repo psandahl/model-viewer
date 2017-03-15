@@ -74,7 +74,7 @@ diffToHeight height' yDiff =
         maxHeight = 100
 
         minHeight :: GLfloat
-        minHeight = (-100)
+        minHeight = -100
 
 makeView :: V3 GLfloat -> M44 GLfloat
 makeView pos' = lookAt pos' (V3 0 0 0) (V3 0 1 0)
@@ -82,7 +82,7 @@ makeView pos' = lookAt pos' (V3 0 0 0) (V3 0 1 0)
 makeCameraPosition :: GLfloat -> GLfloat -> GLfloat -> V3 GLfloat
 makeCameraPosition angle' distance' height' =
     let (V3 x _ z) = unitAtAngle angle'
-    in (V3 (distance' * x) height' (distance' * z))
+    in V3 (distance' * x) height' (distance' * z)
 
 -- | Unit vector, with no height/y value, but with a given angle. At angle zero
 -- the vector points at x = 0, z = 1.

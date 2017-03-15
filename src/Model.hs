@@ -69,12 +69,12 @@ expandEithers eProgram eMesh eTexture =
 
 rotateLeft :: Double -> Model -> Model
 rotateLeft dur model =
-    let angle' = angle model - (realToFrac dur) * rotationSpeed
+    let angle' = angle model - realToFrac dur * rotationSpeed
     in model { angle = angle', matrix = makeRotation angle' }
 
 rotateRight :: Double -> Model -> Model
 rotateRight dur model =
-    let angle' = angle model + (realToFrac dur) * rotationSpeed
+    let angle' = angle model + realToFrac dur * rotationSpeed
     in model { angle = angle', matrix = makeRotation angle' }
 
 render :: M44 GLfloat -> M44 GLfloat -> Model -> IO ()
@@ -82,7 +82,7 @@ render projection view model = do
     GL.glUseProgram (program model)
     GL.glBindVertexArray (vao $ mesh model)
 
-    let mvp = projection !*! view !*! (matrix model)
+    let mvp = projection !*! view !*! matrix model
     GL.setMatrix4 (mvpLoc model) mvp
     GL.drawTrianglesVector (indices $ mesh model)
 
