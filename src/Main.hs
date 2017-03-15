@@ -8,7 +8,7 @@ import           Graphics.LWGL    as GL
 import           Graphics.LWGL    (ClearBufferMask (..), EnableCapability (..),
                                    GLfloat)
 import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
-                                   Window, WindowHint (..))
+                                   VideoMode (..), Window, WindowHint (..))
 import qualified Graphics.UI.GLFW as GLFW
 import           Linear
 import           System.Exit      (exitFailure)
@@ -20,8 +20,8 @@ import           Input            (initInput)
 import           Model            (Model, loadModel, render)
 import           RenderState      (RenderState (..))
 
-createGLContext :: IO Window
-createGLContext = do
+createGLContext :: Bool -> IO (Window, Int, Int)
+createGLContext fullscreen = do
     initSuccess <- GLFW.init
     unless initSuccess $ do
         putStrLn "GLFW initialization failed"
@@ -34,7 +34,7 @@ createGLContext = do
     GLFW.windowHint $ WindowHint'OpenGLForwardCompat True
     GLFW.windowHint $ WindowHint'OpenGLProfile OpenGLProfile'Core
 
-    window <- GLFW.createWindow width height "Model Viewer" Nothing Nothing
+    window <- if fullscreen then makeFullscreen else makeWindow
     when (isNothing window) $ do
         putStrLn "Failed to create GLFW window"
         GLFW.terminate
@@ -42,8 +42,8 @@ createGLContext = do
 
     return $ fromJust window
 
-createRenderState :: FilePath -> IO (IORef RenderState)
-createRenderState file = do
+createRenderState :: FilePath -> Int -> Int -> IO (IORef RenderState)
+createRenderState file width height = do
     eModel <- loadModel file
     when (isLeft eModel) $ do
         let Left err = eModel
@@ -65,11 +65,11 @@ createRenderState file = do
 
 main :: IO ()
 main = do
-    window <- createGLContext
+    (window, width, height) <- createGLContext False
     GLFW.makeContextCurrent (Just window)
     GLFW.setStickyKeysInputMode window StickyKeysInputMode'Enabled
 
-    ref <- createRenderState "example-files/brickcube.json"
+    ref <- createRenderState "example-files/brickcube.json" width height
 
     GL.glViewport 0 0 width height
     GL.glClearColor 1 1 1 0
@@ -101,8 +101,34 @@ renderFrame ref = do
             writeIORef ref state'
         Nothing -> putStrLn "Error: Cannot read time"
 
-width :: Int
-width = 1280
+makeWindow :: IO (Maybe (Window, Int, Int))
+makeWindow = do
+    window <- GLFW.createWindow defaultWidth defaultHeight "Model Viewer" Nothing Nothing
+    case window of
+        Just window' -> return $ Just (window', defaultWidth, defaultHeight)
+        Nothing      -> return Nothing
 
-height :: Int
-height = 960
+makeFullscreen :: IO (Maybe (Window, Int, Int))
+makeFullscreen = do
+    monitor <- GLFW.getPrimaryMonitor
+    case monitor of
+        Just monitor' -> do
+            mode <- GLFW.getVideoMode monitor'
+            case mode of
+                Just mode' -> do
+                    let w = videoModeWidth mode'
+                        h = videoModeHeight mode'
+                    window <- GLFW.createWindow w h "ModelViewer" (Just monitor') Nothing
+                    case window of
+                        Just window' -> return $ Just (window', w, h)
+                        Nothing      -> return Nothing
+
+                Nothing -> return Nothing
+
+        Nothing -> return Nothing
+
+defaultWidth :: Int
+defaultWidth = 1280
+
+defaultHeight :: Int
+defaultHeight = 960
