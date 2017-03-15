@@ -1,6 +1,8 @@
 module Model
     ( Model (..)
     , loadModel
+    , rotateLeft
+    , rotateRight
     , render
     ) where
 
@@ -9,8 +11,8 @@ import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Location,
                                 TextureFormat (..), VertexArrayObject (..))
 import qualified Graphics.LWGL as GL
 import           Graphics.OBJ
-import           Linear        (M44, V3 (..), axisAngle, identity,
-                                mkTransformation, normalize, (!*!))
+import           Linear        (M44, V3 (..), axisAngle, mkTransformation,
+                                (!*!))
 
 import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
@@ -21,6 +23,7 @@ data Model = Model
     , mesh    :: !Mesh
     , texture :: !(Maybe Texture)
     , bumpMap :: !(Maybe Texture)
+    , angle   :: !GLfloat
     , matrix  :: !(M44 GLfloat)
     } deriving Show
 
@@ -46,7 +49,8 @@ loadModel file = do
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
-                        , matrix = identity
+                        , angle = 0
+                        , matrix = makeRotation 0
                         }
 
                 Left err -> return $ Left err
@@ -62,6 +66,16 @@ expandEithers :: Either String Program
               -> Either String (Program, Mesh, Texture)
 expandEithers eProgram eMesh eTexture =
     (,,) <$> eProgram <*> eMesh <*> eTexture
+
+rotateLeft :: Double -> Model -> Model
+rotateLeft dur model =
+    let angle' = angle model - (realToFrac dur) * rotationSpeed
+    in model { angle = angle', matrix = makeRotation angle' }
+
+rotateRight :: Double -> Model -> Model
+rotateRight dur model =
+    let angle' = angle model + (realToFrac dur) * rotationSpeed
+    in model { angle = angle', matrix = makeRotation angle' }
 
 render :: M44 GLfloat -> M44 GLfloat -> Model -> IO ()
 render projection view model = do
@@ -98,9 +112,13 @@ loadTextureFromFile spec =
         Just f  -> GL.loadTexture2D RGB8 True f
         Nothing -> return $ Left "No file specified"
 
-makeRotation :: V3 GLfloat -> GLfloat -> M44 GLfloat
-makeRotation axis' angle' =
-    mkTransformation (axisAngle axis' angle') (V3 0 0 0)
+makeRotation :: GLfloat -> M44 GLfloat
+makeRotation angle' =
+    mkTransformation (axisAngle (V3 0 1 0) angle') (V3 0 0 0)
+
+-- | Half circle per second.
+rotationSpeed :: GLfloat
+rotationSpeed = pi
 
 {-loadBumpMapFromFile :: ModelSpec -> IO (Either String Texture)
 loadBumpMapFromFile spec =
