@@ -15,6 +15,7 @@ import           System.Exit      (exitFailure)
 
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
+import           Helper           (makeProjection)
 import           Input            (initInput)
 import           Model            (Model, loadModel, render)
 import           RenderState      (RenderState (..))
@@ -26,7 +27,7 @@ createGLContext = do
         putStrLn "GLFW initialization failed"
         exitFailure
 
-    GLFW.windowHint $ WindowHint'Resizable False
+    GLFW.windowHint $ WindowHint'Resizable True
     GLFW.windowHint $ WindowHint'Samples 4
     GLFW.windowHint $ WindowHint'ContextVersionMajor 3
     GLFW.windowHint $ WindowHint'ContextVersionMinor 3
@@ -53,7 +54,7 @@ createRenderState file = do
     let Right model' = eModel
         state =
             RenderState
-                { projection = makeProjection
+                { projection = makeProjection width height
                 , camera = initCamera
                 , model = model'
                 , timestamp = 0
@@ -70,6 +71,7 @@ main = do
 
     ref <- createRenderState "example-files/brickcube.json"
 
+    GL.glViewport 0 0 width height
     GL.glClearColor 1 1 1 0
     GL.glEnable DepthTest
     GL.glPolygonMode FrontAndBack Line
@@ -104,15 +106,3 @@ width = 1280
 
 height :: Int
 height = 960
-
-makeProjection :: M44 GLfloat
-makeProjection =
-    perspective (degToRad 45)
-                (fromIntegral width / fromIntegral height)
-                0.001 10000
-
-makeView :: V3 GLfloat -> M44 GLfloat
-makeView pos = lookAt pos (V3 0 0 0) (V3 0 1 0)
-
-degToRad :: Floating a => a -> a
-degToRad deg = deg * (pi / 180.0)

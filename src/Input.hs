@@ -5,15 +5,15 @@ module Input
 import           Control.Monad    (unless, when)
 import           Data.IORef       (IORef, modifyIORef, readIORef, writeIORef)
 import           Graphics.LWGL    (GLfloat)
+import qualified Graphics.LWGL    as GL
 import           Graphics.UI.GLFW (Key (..), KeyState (..), ModifierKeys,
                                    MouseButton (..), MouseButtonState (..),
                                    Window)
 import qualified Graphics.UI.GLFW as GLFW
 import           Linear           (V2 (..), V3 (..), distance, normalize)
 
-import           Text.Printf      (printf)
-
 import           Camera           (moveBackward, moveCamera, moveForward)
+import           Helper           (makeProjection)
 import           Model            (Model (..), rotateLeft, rotateRight)
 import           RenderState      (RenderState (..))
 
@@ -23,6 +23,7 @@ initInput window ref = do
     GLFW.setKeyCallback window $ Just (keyCallback ref)
     GLFW.setMouseButtonCallback window $ Just (mouseButtonCallback ref)
     GLFW.setCursorPosCallback window $ Just (cursorPosCallback ref)
+    GLFW.setWindowSizeCallback window $ Just (windowSizeCallback ref)
 
 scrollCallback :: IORef RenderState -> Window -> Double -> Double -> IO ()
 scrollCallback ref _window _xoffset yoffset =
@@ -74,3 +75,9 @@ cursorPosCallback ref _window x y = do
                                    , camera = moveCamera xDiff yDiff (camera state)
                                    }
         Nothing           -> return ()
+
+windowSizeCallback :: IORef RenderState -> Window -> Int -> Int -> IO ()
+windowSizeCallback ref _window width height = do
+    GL.glViewport 0 0 width height
+    modifyIORef ref $ \state ->
+        state { projection = makeProjection width height }
