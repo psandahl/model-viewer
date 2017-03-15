@@ -14,4 +14,5 @@ data RenderState = RenderState
     , camera        :: !Camera
     , timestamp     :: !Double
     , frameDuration :: !Double
+    , mousePosition :: !(Maybe (Double, Double))
     } deriving Show

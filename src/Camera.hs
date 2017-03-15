@@ -1,8 +1,10 @@
+{-# LANGUAGE MultiWayIf #-}
 module Camera
     ( Camera (view)
     , initCamera
     , moveForward
     , moveBackward
+    , moveCamera
     ) where
 
 import           Graphics.LWGL (GLfloat)
@@ -46,6 +48,33 @@ moveBackward camera =
                                                      newDistance
                                                      (height camera)
               }
+
+moveCamera :: Double -> Double -> Camera -> Camera
+moveCamera xDiff yDiff camera =
+    let newAngle = angle camera + diffToAngle xDiff
+        newHeight = diffToHeight (height camera) yDiff
+    in camera { angle = newAngle
+              , height = newHeight
+              , view = makeView $ makeCameraPosition newAngle
+                                                     (distance camera)
+                                                     newHeight
+              }
+
+diffToAngle :: Double -> GLfloat
+diffToAngle xDiff = realToFrac $ 0.01 * xDiff
+
+diffToHeight :: GLfloat -> Double -> GLfloat
+diffToHeight height' yDiff =
+    let newHeight = height' + realToFrac (0.1 * yDiff)
+    in if | newHeight > maxHeight -> maxHeight
+          | newHeight < minHeight -> minHeight
+          | otherwise -> newHeight
+    where
+        maxHeight :: GLfloat
+        maxHeight = 100
+
+        minHeight :: GLfloat
+        minHeight = (-100)
 
 makeView :: V3 GLfloat -> M44 GLfloat
 makeView pos' = lookAt pos' (V3 0 0 0) (V3 0 1 0)

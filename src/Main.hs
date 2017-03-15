@@ -58,6 +58,7 @@ createRenderState file = do
                 , model = model'
                 , timestamp = 0
                 , frameDuration = 0
+                , mousePosition = Nothing
                 }
     newIORef state
 
