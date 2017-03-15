@@ -12,6 +12,4 @@ data RenderState = RenderState
     { projection :: !(M44 GLfloat)
     , model      :: !Model
     , camera     :: !Camera
-    , mouseDown  :: !Bool
-    , mousePos   :: !(Maybe (GLfloat, GLfloat))
     } deriving Show

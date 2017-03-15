@@ -1,7 +1,6 @@
 module Model
     ( Model (..)
     , loadModel
-    , changeRotation
     , render
     ) where
 
@@ -22,8 +21,6 @@ data Model = Model
     , mesh    :: !Mesh
     , texture :: !(Maybe Texture)
     , bumpMap :: !(Maybe Texture)
-    , axis    :: !(V3 GLfloat)
-    , angle   :: !GLfloat
     , matrix  :: !(M44 GLfloat)
     } deriving Show
 
@@ -49,8 +46,6 @@ loadModel file = do
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
-                        , axis = V3 0 0 0
-                        , angle = 0
                         , matrix = identity
                         }
 
@@ -67,13 +62,6 @@ expandEithers :: Either String Program
               -> Either String (Program, Mesh, Texture)
 expandEithers eProgram eMesh eTexture =
     (,,) <$> eProgram <*> eMesh <*> eTexture
-
-changeRotation :: V3 GLfloat -> GLfloat -> Model -> Model
-changeRotation axis' angle' model =
-    let newAxis = normalize $ axis' + axis model
-        newAngle = angle' + angle model
-        newMatrix = makeRotation newAxis newAngle
-    in model { axis = newAxis, angle = newAngle, matrix = newMatrix }
 
 render :: M44 GLfloat -> M44 GLfloat -> Model -> IO ()
 render projection view model = do
