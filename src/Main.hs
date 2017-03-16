@@ -128,7 +128,7 @@ makeFullscreen = do
         Nothing -> return Nothing
 
 defaultWidth :: Int
-defaultWidth = 1280
+defaultWidth = 1024
 
 defaultHeight :: Int
-defaultHeight = 960
+defaultHeight = 768
