@@ -5,19 +5,17 @@ import           Data.Either      (isLeft)
 import           Data.IORef       (IORef, newIORef, readIORef, writeIORef)
 import           Data.Maybe       (fromJust, isNothing)
 import           Graphics.LWGL    as GL
-import           Graphics.LWGL    (ClearBufferMask (..), EnableCapability (..),
-                                   GLfloat)
+import           Graphics.LWGL    (ClearBufferMask (..), EnableCapability (..))
 import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
                                    VideoMode (..), Window, WindowHint (..))
 import qualified Graphics.UI.GLFW as GLFW
-import           Linear
 import           System.Exit      (exitFailure)
 
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
 import           Input            (initInput)
-import           Model            (Model, loadModel, render)
+import           Model            (loadModel, render)
 import           RenderState      (RenderState (..))
 
 createGLContext :: Bool -> IO (Window, Int, Int)
@@ -60,6 +58,7 @@ createRenderState file width height = do
                 , timestamp = 0
                 , frameDuration = 0
                 , mousePosition = Nothing
+                , renderWireframe = False
                 }
     newIORef state
 
@@ -86,6 +85,10 @@ main = do
 renderFrame :: IORef RenderState -> IO ()
 renderFrame ref = do
     state <- readIORef ref
+
+    if renderWireframe state
+        then GL.glPolygonMode FrontAndBack Line
+        else GL.glPolygonMode FrontAndBack Fill
 
     -- Render stuff with the current state.
     GL.glClear [ColorBuffer, DepthBuffer]

@@ -2,19 +2,17 @@ module Input
     ( initInput
     ) where
 
-import           Control.Monad    (unless, when)
+import           Control.Monad    (when)
 import           Data.IORef       (IORef, modifyIORef, readIORef, writeIORef)
-import           Graphics.LWGL    (GLfloat)
 import qualified Graphics.LWGL    as GL
 import           Graphics.UI.GLFW (Key (..), KeyState (..), ModifierKeys,
                                    MouseButton (..), MouseButtonState (..),
                                    Window)
 import qualified Graphics.UI.GLFW as GLFW
-import           Linear           (V2 (..), V3 (..), distance, normalize)
 
 import           Camera           (moveBackward, moveCamera, moveForward)
 import           Helper           (makeProjection)
-import           Model            (Model (..), rotateLeft, rotateRight)
+import           Model            (rotateLeft, rotateRight)
 import           RenderState      (RenderState (..))
 
 initInput :: Window -> IORef RenderState -> IO ()
@@ -45,6 +43,11 @@ keyCallback ref _window key _scan keyState _modKeys = do
     when (key == Key'Right && activeKey keyState) $
         modifyIORef ref $ \state ->
             state { model = rotateRight (frameDuration state) (model state) }
+
+    -- Toggle wireframe rendering.
+    when (key == Key'R && keyState == KeyState'Pressed) $
+        modifyIORef ref $ \state ->
+            state { renderWireframe = not $ renderWireframe state }
 
 activeKey :: KeyState -> Bool
 activeKey keyState =
