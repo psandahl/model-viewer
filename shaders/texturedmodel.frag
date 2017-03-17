@@ -35,11 +35,11 @@ vec3 calcDiffuseColor()
 vec3 calcSpecularColor()
 {
   vec3 normal = normalize(vNormal);
-  vec3 reflectDir = reflect(transformLightDir(), normal);
+  vec3 reflectDir = reflect(-transformLightDir(), normal);
   vec3 viewDir = normalize(vec3(0) - vPosition);
-  float specular = pow(max(dot(viewDir, reflectDir), 0.0), 64);
+  float specular = pow(max(dot(viewDir, reflectDir), 0.0), 256);
 
-  return specular * 0.8 * lightColor;
+  return specular * lightColor;
 }
 
 void main()
