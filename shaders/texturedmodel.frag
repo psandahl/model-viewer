@@ -32,14 +32,12 @@ vec3 calcDiffuseColor()
   }
   else
   {
-    // The color will be used for multiplication to create the final
-    // color. So use the identity vector as color value when having no
-    // diffuse effects.
-    return vec3(1);
+    return vec3(0);
   }
 }
 
 void main()
 {
-  color = vec4(staticColor * calcAmbientColor() * calcDiffuseColor(), 1.0);
+  vec3 fragmentColor = staticColor * (calcAmbientColor() + calcDiffuseColor());
+  color = vec4(fragmentColor, 1.0);
 }

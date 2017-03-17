@@ -26,7 +26,7 @@ init lightPos' lightColor' =
         , lightPos = lightPos'
         , lightColor = lightColor'
         , ambientStrength = 0.1
-        , diffuseStrength = 10
+        , diffuseStrength = 5
         }
 
 -- | The default position of the ligth. In model space the ligth is to the left
