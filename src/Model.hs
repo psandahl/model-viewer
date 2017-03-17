@@ -19,16 +19,17 @@ import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
 
 data Model = Model
-    { program       :: !Program
-    , mvpLoc        :: !Location
-    , modelLoc      :: !Location
-    , lightDirLoc   :: !Location
-    , lightColorLoc :: !Location
-    , mesh          :: !Mesh
-    , texture       :: !(Maybe Texture)
-    , bumpMap       :: !(Maybe Texture)
-    , angle         :: !GLfloat
-    , matrix        :: !(M44 GLfloat)
+    { program            :: !Program
+    , mvpLoc             :: !Location
+    , modelLoc           :: !Location
+    , lightDirLoc        :: !Location
+    , lightColorLoc      :: !Location
+    , ambientStrengthLoc :: !Location
+    , mesh               :: !Mesh
+    , texture            :: !(Maybe Texture)
+    , bumpMap            :: !(Maybe Texture)
+    , angle              :: !GLfloat
+    , matrix             :: !(M44 GLfloat)
     } deriving Show
 
 loadModel :: FilePath -> IO (Either String Model)
@@ -47,6 +48,7 @@ loadModel file = do
                     modelLoc' <- GL.glGetUniformLocation program' "model"
                     lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
                     lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
+                    ambientStrengthLoc' <- GL.glGetUniformLocation program' "ambientStrength"
 
                     GL.glBindVertexArray (VertexArrayObject 0)
 
@@ -56,6 +58,7 @@ loadModel file = do
                         , modelLoc = modelLoc'
                         , lightDirLoc = lightDirLoc'
                         , lightColorLoc = lightColorLoc'
+                        , ambientStrengthLoc = ambientStrengthLoc'
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
@@ -98,6 +101,7 @@ render projection view lightning model = do
     GL.setMatrix4 (modelLoc model) (matrix model)
     GL.setVector3 (lightDirLoc model) (lightDir lightning)
     GL.setVector3 (lightColorLoc model) (lightColor lightning)
+    GL.glUniform1f (ambientStrengthLoc model) (ambientStrength lightning)
 
     -- Draw the model.
     GL.drawTrianglesVector (indices $ mesh model)
