@@ -10,11 +10,12 @@ import           Linear        (V3 (..), normalize)
 import           Prelude       hiding (init)
 
 data Lightning = Lightning
-    { lightDir        :: !(V3 GLfloat)
-    , lightPos        :: !(V3 GLfloat)
-    , lightColor      :: !(V3 GLfloat)
-    , ambientStrength :: !Float
-    , diffuseStrength :: !Float
+    { lightDir         :: !(V3 GLfloat)
+    , lightPos         :: !(V3 GLfloat)
+    , lightColor       :: !(V3 GLfloat)
+    , ambientStrength  :: !Float
+    , specularStrength :: !Float
+    , specularShine    :: !Int
     } deriving Show
 
 -- | Initialize lightning parameters. The lightning direction is normalized
@@ -26,13 +27,14 @@ init lightPos' lightColor' =
         , lightPos = lightPos'
         , lightColor = lightColor'
         , ambientStrength = 0.1
-        , diffuseStrength = 5
+        , specularStrength = 1.0
+        , specularShine = 32
         }
 
 -- | The default position of the ligth. In model space the ligth is to the left
 -- of the scene. No height, no depth.
 defaultPosition :: V3 GLfloat
-defaultPosition = V3 (-10) 0 (-5)
+defaultPosition = V3 (-10) 0 0
 
 -- | The color white.
 whiteColor :: V3 GLfloat
