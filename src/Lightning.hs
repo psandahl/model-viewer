@@ -14,6 +14,7 @@ data Lightning = Lightning
     , lightPos        :: !(V3 GLfloat)
     , lightColor      :: !(V3 GLfloat)
     , ambientStrength :: !Float
+    , diffuseStrength :: !Float
     } deriving Show
 
 -- | Initialize lightning parameters. The lightning direction is normalized
@@ -25,6 +26,7 @@ init lightPos' lightColor' =
         , lightPos = lightPos'
         , lightColor = lightColor'
         , ambientStrength = 0.1
+        , diffuseStrength = 10
         }
 
 -- | The default position of the ligth. In model space the ligth is to the left

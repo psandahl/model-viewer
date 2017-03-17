@@ -25,6 +25,7 @@ data Model = Model
     , lightDirLoc        :: !Location
     , lightColorLoc      :: !Location
     , ambientStrengthLoc :: !Location
+    , diffuseStrengthLoc :: !Location
     , mesh               :: !Mesh
     , texture            :: !(Maybe Texture)
     , bumpMap            :: !(Maybe Texture)
@@ -49,6 +50,7 @@ loadModel file = do
                     lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
                     lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
                     ambientStrengthLoc' <- GL.glGetUniformLocation program' "ambientStrength"
+                    diffuseStrengthLoc' <- GL.glGetUniformLocation program' "diffuseStrength"
 
                     GL.glBindVertexArray (VertexArrayObject 0)
 
@@ -59,6 +61,7 @@ loadModel file = do
                         , lightDirLoc = lightDirLoc'
                         , lightColorLoc = lightColorLoc'
                         , ambientStrengthLoc = ambientStrengthLoc'
+                        , diffuseStrengthLoc = diffuseStrengthLoc'
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
@@ -102,6 +105,7 @@ render projection view lightning model = do
     GL.setVector3 (lightDirLoc model) (lightDir lightning)
     GL.setVector3 (lightColorLoc model) (lightColor lightning)
     GL.glUniform1f (ambientStrengthLoc model) (ambientStrength lightning)
+    GL.glUniform1f (diffuseStrengthLoc model) (diffuseStrength lightning)
 
     -- Draw the model.
     GL.drawTrianglesVector (indices $ mesh model)
