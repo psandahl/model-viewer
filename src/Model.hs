@@ -21,6 +21,7 @@ import qualified ModelSpec     as Spec
 data Model = Model
     { program            :: !Program
     , mvpLoc             :: !Location
+    , viewLoc            :: !Location
     , modelLoc           :: !Location
     , lightDirLoc        :: !Location
     , lightColorLoc      :: !Location
@@ -46,6 +47,7 @@ loadModel file = do
                 Right (program', mesh', texture') -> do
 
                     mvpLoc' <- GL.glGetUniformLocation program' "mvp"
+                    viewLoc' <- GL.glGetUniformLocation program' "view"
                     modelLoc' <- GL.glGetUniformLocation program' "model"
                     lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
                     lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
@@ -57,6 +59,7 @@ loadModel file = do
                     return $ Right Model
                         { program = program'
                         , mvpLoc = mvpLoc'
+                        , viewLoc = viewLoc'
                         , modelLoc = modelLoc'
                         , lightDirLoc = lightDirLoc'
                         , lightColorLoc = lightColorLoc'
@@ -101,6 +104,7 @@ render projection view lightning model = do
     -- Set uniforms.
     let mvp = projection !*! view !*! matrix model
     GL.setMatrix4 (mvpLoc model) mvp
+    GL.setMatrix4 (viewLoc model) view
     GL.setMatrix4 (modelLoc model) (matrix model)
     GL.setVector3 (lightDirLoc model) (lightDir lightning)
     GL.setVector3 (lightColorLoc model) (lightColor lightning)

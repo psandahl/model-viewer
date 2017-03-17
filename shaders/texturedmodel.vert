@@ -5,6 +5,7 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoord;
 
 uniform mat4 mvp;
+uniform mat4 view;
 uniform mat4 model;
 
 out vec3 vPosition;
@@ -13,10 +14,18 @@ out vec2 vTexCoord;
 
 void main()
 {
-  // Interpolate attributes.
-  vPosition = (model * vec4(position, 1.0)).xyz;
-  vNormal = (model * vec4(normal, 0.0)).xyz;
+  // Lightning calculations are in view space, so make a transformation
+  // matrix of mode and view.
+  mat4 mv = view * model;
+
+  // Interpolate attributes:
+  // Transform to view space.
+  vPosition = (mv * vec4(position, 1.0)).xyz;
+  vNormal = (mv * vec4(normal, 0.0)).xyz;
+
+  // Just pass on.
   vTexCoord = texCoord;
 
+  // Transform vertex position.
   gl_Position = mvp * vec4(position, 1.0);
 }
