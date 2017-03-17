@@ -15,6 +15,7 @@ import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
 import           Input            (initInput)
+import qualified Lightning
 import           Model            (loadModel, render)
 import           RenderState      (RenderState (..))
 
@@ -59,6 +60,8 @@ createRenderState file width height = do
                 , frameDuration = 0
                 , mousePosition = Nothing
                 , renderWireframe = False
+                , lightning = Lightning.init Lightning.defaultPosition
+                                             Lightning.whiteColor
                 }
     newIORef state
 
@@ -71,7 +74,7 @@ main = do
     ref <- createRenderState "example-files/brickcube.json" width height
 
     GL.glViewport 0 0 width height
-    GL.glClearColor 1 1 1 0
+    GL.glClearColor 0 0 0.1 0
     GL.glEnable DepthTest
     GL.glPolygonMode FrontAndBack Line
 
@@ -92,7 +95,10 @@ renderFrame ref = do
 
     -- Render stuff with the current state.
     GL.glClear [ColorBuffer, DepthBuffer]
-    render (projection state) (view $ camera state) (model state)
+    render (projection state)
+           (view $ camera state)
+           (lightning state)
+           (model state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime

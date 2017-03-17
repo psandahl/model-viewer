@@ -14,6 +14,7 @@ import           Graphics.OBJ
 import           Linear        (M44, V3 (..), axisAngle, mkTransformation,
                                 (!*!))
 
+import           Lightning     (Lightning (..))
 import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
 
@@ -77,8 +78,8 @@ rotateRight dur model =
     let angle' = angle model + realToFrac dur * rotationSpeed
     in model { angle = angle', matrix = makeRotation angle' }
 
-render :: M44 GLfloat -> M44 GLfloat -> Model -> IO ()
-render projection view model = do
+render :: M44 GLfloat -> M44 GLfloat -> Lightning -> Model -> IO ()
+render projection view lightning model = do
     GL.glUseProgram (program model)
     GL.glBindVertexArray (vao $ mesh model)
 

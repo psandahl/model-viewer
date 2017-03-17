@@ -17,11 +17,13 @@ data Camera = Camera
     , height   :: !GLfloat
     } deriving Show
 
+-- | Init a camera, with a default position of five units back. No depth,
+-- no height.
 initCamera :: Camera
 initCamera =
     let angle' = 0
         distance' = 5
-        height' = 5
+        height' = 0
     in
         Camera { view = makeView $ makeCameraPosition angle' distance' height'
                , angle = angle'

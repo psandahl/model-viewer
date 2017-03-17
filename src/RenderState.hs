@@ -6,6 +6,7 @@ import           Graphics.LWGL (GLfloat)
 import           Linear        (M44)
 
 import           Camera        (Camera)
+import           Lightning     (Lightning)
 import           Model         (Model)
 
 data RenderState = RenderState
@@ -16,4 +17,5 @@ data RenderState = RenderState
     , frameDuration   :: !Double
     , mousePosition   :: !(Maybe (Double, Double))
     , renderWireframe :: !Bool
+    , lightning       :: !Lightning
     } deriving Show
