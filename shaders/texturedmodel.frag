@@ -25,15 +25,9 @@ vec3 calcDiffuseColor()
 
   // Normals are transformed to view space in vertex shader. Just normalize.
   vec3 normal = normalize(vNormal);
-  float angle = dot(normal, tLightDir);
-  if (angle > 0)
-  {
-    return 10 * angle * lightColor;
-  }
-  else
-  {
-    return vec3(0);
-  }
+  float diffuse = max(dot(normal, tLightDir), 0.0);
+
+  return diffuse * lightColor;
 }
 
 void main()
