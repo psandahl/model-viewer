@@ -5,8 +5,18 @@ layout (location = 1) in vec3 normal;
 layout (location = 2) in vec2 texCoord;
 
 uniform mat4 mvp;
+uniform mat4 model;
+
+out vec3 vPosition;
+out vec3 vNormal;
+out vec2 vTexCoord;
 
 void main()
 {
+  // Interpolate attributes.
+  vPosition = (model * vec4(position, 1.0)).xyz;
+  vNormal = (model * vec4(normal, 0.0)).xyz;
+  vTexCoord = texCoord;
+
   gl_Position = mvp * vec4(position, 1.0);
 }

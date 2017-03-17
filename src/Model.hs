@@ -19,13 +19,16 @@ import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
 
 data Model = Model
-    { program :: !Program
-    , mvpLoc  :: !Location
-    , mesh    :: !Mesh
-    , texture :: !(Maybe Texture)
-    , bumpMap :: !(Maybe Texture)
-    , angle   :: !GLfloat
-    , matrix  :: !(M44 GLfloat)
+    { program       :: !Program
+    , mvpLoc        :: !Location
+    , modelLoc      :: !Location
+    , lightDirLoc   :: !Location
+    , lightColorLoc :: !Location
+    , mesh          :: !Mesh
+    , texture       :: !(Maybe Texture)
+    , bumpMap       :: !(Maybe Texture)
+    , angle         :: !GLfloat
+    , matrix        :: !(M44 GLfloat)
     } deriving Show
 
 loadModel :: FilePath -> IO (Either String Model)
@@ -41,12 +44,18 @@ loadModel file = do
                 Right (program', mesh', texture') -> do
 
                     mvpLoc' <- GL.glGetUniformLocation program' "mvp"
+                    modelLoc' <- GL.glGetUniformLocation program' "model"
+                    lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
+                    lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
 
                     GL.glBindVertexArray (VertexArrayObject 0)
 
                     return $ Right Model
                         { program = program'
                         , mvpLoc = mvpLoc'
+                        , modelLoc = modelLoc'
+                        , lightDirLoc = lightDirLoc'
+                        , lightColorLoc = lightColorLoc'
                         , mesh = mesh'
                         , texture = Just texture'
                         , bumpMap = Nothing
@@ -83,8 +92,14 @@ render projection view lightning model = do
     GL.glUseProgram (program model)
     GL.glBindVertexArray (vao $ mesh model)
 
+    -- Set uniforms.
     let mvp = projection !*! view !*! matrix model
     GL.setMatrix4 (mvpLoc model) mvp
+    GL.setMatrix4 (modelLoc model) (matrix model)
+    GL.setVector3 (lightDirLoc model) (lightDir lightning)
+    GL.setVector3 (lightColorLoc model) (lightColor lightning)
+
+    -- Draw the model.
     GL.drawTrianglesVector (indices $ mesh model)
 
     GL.glBindVertexArray (VertexArrayObject 0)
