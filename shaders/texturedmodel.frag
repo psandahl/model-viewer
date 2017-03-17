@@ -13,6 +13,12 @@ out vec4 color;
 
 const vec3 staticColor = vec3(1.0, 0.0, 0.0);
 
+vec3 transformLightDir()
+{
+  // The light direction is in model space. Transform to view space.
+  return (view * vec4(lightDir, 0.0)).xyz;
+}
+
 vec3 calcAmbientColor()
 {
   return lightColor * ambientStrength;
@@ -20,18 +26,24 @@ vec3 calcAmbientColor()
 
 vec3 calcDiffuseColor()
 {
-  // The light direction is in model space. Transform to view space.
-  vec3 tLightDir = (view * vec4(lightDir, 0.0)).xyz;
-
-  // Normals are transformed to view space in vertex shader. Just normalize.
   vec3 normal = normalize(vNormal);
-  float diffuse = max(dot(normal, tLightDir), 0.0);
+  float diffuse = max(dot(normal, transformLightDir()), 0.0);
 
   return diffuse * lightColor;
 }
 
+vec3 calcSpecularColor()
+{
+  vec3 normal = normalize(vNormal);
+  vec3 reflectDir = reflect(transformLightDir(), normal);
+  vec3 viewDir = normalize(vec3(0) - vPosition);
+  float specular = pow(max(dot(viewDir, reflectDir), 0.0), 64);
+
+  return specular * 0.8 * lightColor;
+}
+
 void main()
 {
-  vec3 fragmentColor = staticColor * (calcAmbientColor() + calcDiffuseColor());
+  vec3 fragmentColor = staticColor * (calcAmbientColor() + calcDiffuseColor() + calcSpecularColor());
   color = vec4(fragmentColor, 1.0);
 }
