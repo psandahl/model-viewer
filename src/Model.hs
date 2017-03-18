@@ -10,7 +10,7 @@ import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Location,
                                 Mesh (..), Program, ShaderType (..), Texture,
                                 TextureFormat (..), VertexArrayObject (..))
 import qualified Graphics.LWGL as GL
-import           Graphics.OBJ
+import           Graphics.OBJ  (ObjData (..), loadObjFromFile)
 import           Linear        (M44, V3 (..), axisAngle, mkTransformation,
                                 (!*!))
 
@@ -123,9 +123,9 @@ render projection view lightning model = do
 
 meshFromFile :: ModelSpec -> IO (Either String Mesh)
 meshFromFile model = do
-    vectors <- loadVTNFromFile (Spec.file model)
+    vectors <- loadObjFromFile (Spec.file model)
     case vectors of
-        Right (vs, is) -> Right <$> GL.buildFromVector StaticDraw vs is
+        Right (WithTextureAndNormal vs is) -> Right <$> GL.buildFromVector StaticDraw vs is
         Left err       -> return $ Left err
 
 
