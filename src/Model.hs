@@ -89,7 +89,7 @@ loadFileResources spec =
         Spec.ModelSpec _model (Just _texFile) (Just _bumpFile) ->
             return $ Left "Bump mapped specifications not supported yet"
 
-        Spec.ModelSpec model (Just texFile) Nothing         -> do
+        Spec.ModelSpec model (Just texFile) Nothing -> do
             mesh' <- meshFromFile model
             prog <- GL.loadShaders
                 [ (VertexShader, "shaders/texturedmodel.vert")
@@ -104,15 +104,28 @@ loadFileResources spec =
         Spec.ModelSpec _model Nothing (Just _bumpFile) ->
             return $ Left "Non valid model specification"
 
-        Spec.ModelSpec _model Nothing Nothing                ->
-            return $ Left "Non textured specifications not supported yet"
+        Spec.ModelSpec model Nothing Nothing -> do
+            mesh' <- meshFromFile model
+            prog <- GL.loadShaders
+                [ (VertexShader, "shaders/coloredmodel.vert")
+                , (FragmentShader, "shaders/coloredmodel.frag")
+                ]
+            case (,) <$> mesh' <*> prog of
+                Right (mesh'', prog') ->
+                    return $ Right (mesh'', prog', Nothing, Nothing)
+                Left err -> return $ Left err
 
 meshFromFile :: FilePath -> IO (Either String Mesh)
 meshFromFile file = do
     vectors <- loadObjFromFile file
     case vectors of
-        Right (WithTextureAndNormal vs is) -> Right <$> GL.buildFromVector StaticDraw vs is
-        Left err       -> return $ Left err
+        Right (WithNormal vs is) ->
+            Right <$> GL.buildFromVector StaticDraw vs is
+
+        Right (WithTextureAndNormal vs is) ->
+            Right <$> GL.buildFromVector StaticDraw vs is
+
+        Left err -> return $ Left err
 
 finalizeModel :: (Mesh, Program, Maybe Texture, Maybe Texture) -> IO Model
 finalizeModel (mesh', program', texture', bumpMap') = do

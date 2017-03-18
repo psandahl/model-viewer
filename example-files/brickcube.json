@@ -1,4 +1,3 @@
 {
-  "file" : "example-files/suzanne.obj",
-  "texture" : "example-files/brownbricks.jpg"
+  "file" : "example-files/cube.obj"
 }
