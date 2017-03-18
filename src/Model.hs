@@ -37,57 +37,19 @@ data Model = Model
 
 loadModel :: FilePath -> IO (Either String Model)
 loadModel file = do
-    model <- Spec.fromFile file
-    case model of
-        Right (Spec.ModelSpec _ (Just _) Nothing) -> do
-            let Right model' = model
-            es <- expandEithers <$> programFromFile model'
-                                <*> meshFromFile model'
-                                <*> loadTextureFromFile model'
-            case es of
-                Right (program', mesh', texture') -> do
-
-                    mvpLoc' <- GL.glGetUniformLocation program' "mvp"
-                    viewLoc' <- GL.glGetUniformLocation program' "view"
-                    modelLoc' <- GL.glGetUniformLocation program' "model"
-                    lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
-                    lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
-                    ambientStrengthLoc' <- GL.glGetUniformLocation program' "ambientStrength"
-                    specularStrengthLoc' <- GL.glGetUniformLocation program' "specularStrength"
-                    specularShineLoc' <- GL.glGetUniformLocation program' "specularShine"
-
-                    GL.glBindVertexArray (VertexArrayObject 0)
-
-                    return $ Right Model
-                        { program = program'
-                        , mvpLoc = mvpLoc'
-                        , viewLoc = viewLoc'
-                        , modelLoc = modelLoc'
-                        , lightDirLoc = lightDirLoc'
-                        , lightColorLoc = lightColorLoc'
-                        , ambientStrengthLoc = ambientStrengthLoc'
-                        , specularStrengthLoc = specularStrengthLoc'
-                        , specularShineLoc = specularShineLoc'
-                        , mesh = mesh'
-                        , texture = Just texture'
-                        , bumpMap = Nothing
-                        , angle = 0
-                        , matrix = makeRotation 0
-                        }
+    spec <- Spec.fromFile file
+    case spec of
+        Right spec' -> do
+            resources <- loadFileResources spec'
+            case resources of
+                Right resources' -> do
+                    model' <- finalizeModel resources'
+                    return $ Right model'
 
                 Left err -> return $ Left err
 
-        Right _ ->
-            return $ Left "Not supported"
-
         Left err -> return $ Left err
 
-expandEithers :: Either String Program
-              -> Either String Mesh
-              -> Either String Texture
-              -> Either String (Program, Mesh, Texture)
-expandEithers eProgram eMesh eTexture =
-    (,,) <$> eProgram <*> eMesh <*> eTexture
 
 rotateLeft :: Double -> Model -> Model
 rotateLeft dur model =
@@ -120,29 +82,67 @@ render projection view lightning model = do
 
     GL.glBindVertexArray (VertexArrayObject 0)
 
+loadFileResources :: ModelSpec
+                  -> IO (Either String (Mesh, Program, Maybe Texture, Maybe Texture))
+loadFileResources spec =
+    case spec of
+        Spec.ModelSpec _model (Just _texFile) (Just _bumpFile) ->
+            return $ Left "Bump mapped specifications not supported yet"
 
-meshFromFile :: ModelSpec -> IO (Either String Mesh)
-meshFromFile model = do
-    vectors <- loadObjFromFile (Spec.file model)
+        Spec.ModelSpec model (Just texFile) Nothing         -> do
+            mesh' <- meshFromFile model
+            prog <- GL.loadShaders
+                [ (VertexShader, "shaders/texturedmodel.vert")
+                , (FragmentShader, "shaders/texturedmodel.frag")
+                ]
+            tex <- GL.loadTexture2D RGB8 True texFile
+            case (,,) <$> mesh' <*> prog <*> tex of
+                Right (mesh'', prog', tex') ->
+                    return $ Right (mesh'', prog', Just tex', Nothing)
+                Left err -> return $ Left err
+
+        Spec.ModelSpec _model Nothing (Just _bumpFile) ->
+            return $ Left "Non valid model specification"
+
+        Spec.ModelSpec _model Nothing Nothing                ->
+            return $ Left "Non textured specifications not supported yet"
+
+meshFromFile :: FilePath -> IO (Either String Mesh)
+meshFromFile file = do
+    vectors <- loadObjFromFile file
     case vectors of
         Right (WithTextureAndNormal vs is) -> Right <$> GL.buildFromVector StaticDraw vs is
         Left err       -> return $ Left err
 
+finalizeModel :: (Mesh, Program, Maybe Texture, Maybe Texture) -> IO Model
+finalizeModel (mesh', program', texture', bumpMap') = do
+    mvpLoc' <- GL.glGetUniformLocation program' "mvp"
+    viewLoc' <- GL.glGetUniformLocation program' "view"
+    modelLoc' <- GL.glGetUniformLocation program' "model"
+    lightDirLoc' <- GL.glGetUniformLocation program' "lightDir"
+    lightColorLoc' <- GL.glGetUniformLocation program' "lightColor"
+    ambientStrengthLoc' <- GL.glGetUniformLocation program' "ambientStrength"
+    specularStrengthLoc' <- GL.glGetUniformLocation program' "specularStrength"
+    specularShineLoc' <- GL.glGetUniformLocation program' "specularShine"
 
-programFromFile :: ModelSpec -> IO (Either String Program)
-programFromFile spec =
-    case (Spec.texture spec, Spec.bumpMap spec) of
-        (Just _, Nothing) ->
-            GL.loadShaders [ (VertexShader, "shaders/texturedmodel.vert")
-                           , (FragmentShader, "shaders/texturedmodel.frag")
-                           ]
-        _                 -> return $ Left "Not supported yet"
+    GL.glBindVertexArray (VertexArrayObject 0)
 
-loadTextureFromFile :: ModelSpec -> IO (Either String Texture)
-loadTextureFromFile spec =
-    case Spec.texture spec of
-        Just f  -> GL.loadTexture2D RGB8 True f
-        Nothing -> return $ Left "No file specified"
+    return Model
+        { program = program'
+        , mvpLoc = mvpLoc'
+        , viewLoc = viewLoc'
+        , modelLoc = modelLoc'
+        , lightDirLoc = lightDirLoc'
+        , lightColorLoc = lightColorLoc'
+        , ambientStrengthLoc = ambientStrengthLoc'
+        , specularStrengthLoc = specularStrengthLoc'
+        , specularShineLoc = specularShineLoc'
+        , mesh = mesh'
+        , texture = texture'
+        , bumpMap = bumpMap'
+        , angle = 0
+        , matrix = makeRotation 0
+        }
 
 makeRotation :: GLfloat -> M44 GLfloat
 makeRotation angle' =
@@ -151,10 +151,3 @@ makeRotation angle' =
 -- | Half circle per second.
 rotationSpeed :: GLfloat
 rotationSpeed = pi
-
-{-loadBumpMapFromFile :: ModelSpec -> IO (Either String Texture)
-loadBumpMapFromFile spec =
-    case Spec.bumpMap spec of
-        Just f  -> GL.loadTexture2D RGB8 False f
-        Nothing -> return $ Left "No file specified"
--}
