@@ -71,7 +71,7 @@ main = do
     GLFW.makeContextCurrent (Just window)
     GLFW.setStickyKeysInputMode window StickyKeysInputMode'Enabled
 
-    ref <- createRenderState "example-files/brickcube.json" width height
+    ref <- createRenderState "example-files/testmodel.json" width height
 
     GL.glViewport 0 0 width height
     GL.glClearColor 0 0 0.1 0

@@ -12,7 +12,7 @@ uniform int specularShine;
 
 out vec4 color;
 
-const vec3 staticColor = vec3(0.0, 1.0, 0.0);
+const vec3 staticColor = vec3(192.0 / 255.0, 192.0 / 255.0, 192.0 / 255.0);
 
 vec3 transformLightDir()
 {
