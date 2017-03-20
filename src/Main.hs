@@ -74,7 +74,7 @@ main = do
     ref <- createRenderState "example-files/testmodel.json" width height
 
     GL.glViewport 0 0 width height
-    GL.glClearColor 0 0 0.1 0
+    GL.glClearColor (135.0 / 255.0) (206.0 / 255.0) (250.0 / 255.0) 0
     GL.glEnable DepthTest
     GL.glPolygonMode FrontAndBack Line
 
