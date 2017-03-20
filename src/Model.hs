@@ -6,9 +6,12 @@ module Model
     , render
     ) where
 
+import           Control.Monad (when)
+import           Data.Maybe    (fromJust, isJust)
 import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Location,
                                 Mesh (..), Program, ShaderType (..), Texture,
-                                TextureFormat (..), VertexArrayObject (..))
+                                TextureFormat (..), TextureTarget (..),
+                                TextureUnit (..), VertexArrayObject (..))
 import qualified Graphics.LWGL as GL
 import           Graphics.OBJ  (ObjData (..), loadObjFromFile)
 import           Linear        (M44, V3 (..), axisAngle, mkTransformation,
@@ -28,6 +31,7 @@ data Model = Model
     , ambientStrengthLoc  :: !Location
     , specularStrengthLoc :: !Location
     , specularShineLoc    :: !Location
+    , samplerLoc          :: !(Maybe Location)
     , mesh                :: !Mesh
     , texture             :: !(Maybe Texture)
     , bumpMap             :: !(Maybe Texture)
@@ -76,6 +80,13 @@ render projection view lightning model = do
     GL.glUniform1f (ambientStrengthLoc model) (ambientStrength lightning)
     GL.glUniform1f (specularStrengthLoc model) (specularStrength lightning)
     GL.glUniform1i (specularShineLoc model) (specularShine lightning)
+
+    when ((isJust $ samplerLoc model) && (isJust $ texture model)) $ do
+        let samplerLoc' = fromJust $ samplerLoc model
+            texture' = fromJust $ texture model
+        GL.glActiveTexture (TextureUnit 0)
+        GL.glBindTexture Texture2D texture'
+        GL.glUniform1i samplerLoc' 0
 
     -- Draw the model.
     GL.drawTrianglesVector (indices $ mesh model)
@@ -138,6 +149,12 @@ finalizeModel (mesh', program', texture', bumpMap') = do
     specularStrengthLoc' <- GL.glGetUniformLocation program' "specularStrength"
     specularShineLoc' <- GL.glGetUniformLocation program' "specularShine"
 
+    -- The sampler location shall only be loaded if we have a textured
+    -- model.
+    samplerLoc' <- if isJust texture'
+                       then Just <$> GL.glGetUniformLocation program' "sampler"
+                       else return Nothing
+
     GL.glBindVertexArray (VertexArrayObject 0)
 
     return Model
@@ -150,6 +167,7 @@ finalizeModel (mesh', program', texture', bumpMap') = do
         , ambientStrengthLoc = ambientStrengthLoc'
         , specularStrengthLoc = specularStrengthLoc'
         , specularShineLoc = specularShineLoc'
+        , samplerLoc = samplerLoc'
         , mesh = mesh'
         , texture = texture'
         , bumpMap = bumpMap'

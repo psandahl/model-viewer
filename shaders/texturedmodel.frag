@@ -10,10 +10,9 @@ uniform vec3 lightColor;
 uniform float ambientStrength;
 uniform float specularStrength;
 uniform int specularShine;
+uniform sampler2D sampler;
 
 out vec4 color;
-
-const vec3 staticColor = vec3(1.0, 0.0, 0.0);
 
 vec3 transformLightDir()
 {
@@ -46,6 +45,7 @@ vec3 calcSpecularColor()
 
 void main()
 {
-  vec3 fragmentColor = staticColor * (calcAmbientColor() + calcDiffuseColor() + calcSpecularColor());
-  color = vec4(fragmentColor, 1.0);
+  vec3 pixelColor = texture2D(sampler, vec2(vTexCoord.x, 1.0 - vTexCoord.y)).xyz;
+  vec3 finalColor = pixelColor * (calcAmbientColor() + calcDiffuseColor() + calcSpecularColor());
+  color = vec4(finalColor, 1.0);
 }

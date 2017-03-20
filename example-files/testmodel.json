@@ -1,3 +1,4 @@
 {
-  "file" : "example-files/volume_emission_no_uv.obj"
+  "file" : "example-files/suzanne.obj",
+  "texture" : "example-files/metal.jpg"
 }

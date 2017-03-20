@@ -26,9 +26,9 @@ init lightPos' lightColor' =
         { lightDir = negate $ lightFromTo lightPos' origo
         , lightPos = lightPos'
         , lightColor = lightColor'
-        , ambientStrength = 0.1
-        , specularStrength = 1.0
-        , specularShine = 32
+        , ambientStrength = 0.15
+        , specularStrength = 2.0
+        , specularShine = 64
         }
 
 -- | The default position of the ligth. In model space the ligth is to the left
