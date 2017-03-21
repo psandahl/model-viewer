@@ -9,10 +9,12 @@ import           Backdrop      (Backdrop)
 import           Camera        (Camera)
 import           Lightning     (Lightning)
 import           Model         (Model)
+import           ShadowMap     (ShadowMap)
 
 data RenderState = RenderState
     { projection      :: !(M44 GLfloat)
     , model           :: !Model
+    , shadowMap       :: !ShadowMap
     , backdrop        :: !Backdrop
     , camera          :: !Camera
     , screenWidth     :: !Int

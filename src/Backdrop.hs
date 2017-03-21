@@ -7,6 +7,8 @@ module Backdrop
 import           Graphics.LWGL                   (BufferUsage (..), GLfloat,
                                                   GLuint, Location, Mesh (..),
                                                   Program, ShaderType (..),
+                                                  Texture, TextureTarget (..),
+                                                  TextureUnit (..),
                                                   VertexArrayObject (..),
                                                   buildFromList, loadShaders)
 import qualified Graphics.LWGL                   as GL
@@ -17,10 +19,11 @@ import           Prelude                         hiding (init)
 import           Helper                          (makeTranslate)
 
 data Backdrop = Backdrop
-    { program     :: !Program
-    , mvpLoc      :: !Location
-    , mesh        :: !Mesh
-    , backdropPos :: !(V3 GLfloat)
+    { program      :: !Program
+    , mvpLoc       :: !Location
+    , shadowMapLoc :: !Location
+    , mesh         :: !Mesh
+    , backdropPos  :: !(V3 GLfloat)
     } deriving Show
 
 init :: IO (Either String Backdrop)
@@ -32,23 +35,30 @@ init = do
         Right prog' -> do
             mesh' <- buildFromList StaticDraw vertices indices'
             mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
+            shadowMapLoc' <- GL.glGetUniformLocation prog' "shadowMap"
             return $ Right
                 Backdrop
                     { program = prog'
                     , mvpLoc = mvpLoc'
+                    , shadowMapLoc = shadowMapLoc'
                     , mesh = mesh'
                     , backdropPos = V3 (-1.5) (-1.2) 0
                     }
         Left err -> return $ Left err
 
-render :: M44 GLfloat -> M44 GLfloat -> Backdrop -> IO ()
-render proj view backdrop = do
+render :: M44 GLfloat -> M44 GLfloat -> Texture -> Backdrop -> IO ()
+render proj view texture backdrop = do
     let model = makeTranslate $ backdropPos backdrop
         mvp = proj !*! view !*! model
 
     GL.glUseProgram (program backdrop)
     GL.glBindVertexArray (vao $ mesh backdrop)
     GL.setMatrix4 (mvpLoc backdrop) mvp
+
+    GL.glActiveTexture (TextureUnit 0)
+    GL.glBindTexture Texture2D texture
+    GL.glUniform1i (shadowMapLoc backdrop) 0
+
     GL.drawTrianglesVector (indices $ mesh backdrop)
 
     GL.glBindVertexArray (VertexArrayObject 0)

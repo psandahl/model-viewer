@@ -5,7 +5,8 @@ import           Data.Either      (isLeft)
 import           Data.IORef       (IORef, newIORef, readIORef, writeIORef)
 import           Data.Maybe       (fromJust, isNothing)
 import           Graphics.LWGL    as GL
-import           Graphics.LWGL    (ClearBufferMask (..), EnableCapability (..))
+import           Graphics.LWGL    (ClearBufferMask (..), EnableCapability (..),
+                                   FrameBuffer (..))
 import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
                                    VideoMode (..), Window, WindowHint (..))
 import qualified Graphics.UI.GLFW as GLFW
@@ -19,6 +20,8 @@ import           Input            (initInput)
 import qualified Lightning
 import           Model            (loadModel, render)
 import           RenderState      (RenderState (..))
+import           ShadowMap        (ShadowMap (..), shadowHeight, shadowWidth)
+import qualified ShadowMap
 
 createGLContext :: Bool -> IO (Window, Int, Int)
 createGLContext fullscreen = do
@@ -51,6 +54,13 @@ createRenderState file width height = do
         GLFW.terminate
         exitFailure
 
+    eShadowMap <- ShadowMap.init
+    when (isLeft eShadowMap) $ do
+        let Left err = eShadowMap
+        putStrLn err
+        GLFW.terminate
+        exitFailure
+
     eBackdrop <- Backdrop.init
     when (isLeft eBackdrop) $ do
         let Left err = eBackdrop
@@ -59,11 +69,13 @@ createRenderState file width height = do
         exitFailure
 
     let Right model' = eModel
+        Right shadowMap' = eShadowMap
         Right backdrop' = eBackdrop
         state =
             RenderState
                 { projection = makeProjection width height
                 , model = model'
+                , shadowMap = shadowMap'
                 , backdrop = backdrop'
                 , camera = initCamera
                 , screenWidth = width
@@ -100,7 +112,13 @@ renderFrame :: IORef RenderState -> IO ()
 renderFrame ref = do
     state <- readIORef ref
 
-    -- Render stuff with the current state.
+    -- Render the model in the shadow map.
+    GL.glViewport 0 0 shadowWidth shadowHeight
+    GL.glBindFramebuffer GLFrameBuffer (fbo $ shadowMap state)
+    GL.glClear [DepthBuffer]
+    GL.glBindFramebuffer GLFrameBuffer (FrameBuffer 0)
+
+    -- Render stuff with the current state in the screen buffers.
     GL.glViewport 0 0 (screenWidth state) (screenHeight state)
     GL.glClear [ColorBuffer, DepthBuffer]
 
@@ -116,7 +134,8 @@ renderFrame ref = do
     GL.glPolygonMode FrontAndBack Fill
 
     -- Render the backdrop.
-    Backdrop.render (projection state) (view $ camera state) (backdrop state)
+    Backdrop.render (projection state) (view $ camera state)
+                    (texture $ shadowMap state) (backdrop state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime
