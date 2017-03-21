@@ -11,6 +11,7 @@ import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit      (exitFailure)
 
+import qualified Backdrop
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
@@ -50,12 +51,21 @@ createRenderState file width height = do
         GLFW.terminate
         exitFailure
 
+    eBackdrop <- Backdrop.init
+    when (isLeft eBackdrop) $ do
+        let Left err = eBackdrop
+        putStrLn err
+        GLFW.terminate
+        exitFailure
+
     let Right model' = eModel
+        Right backdrop' = eBackdrop
         state =
             RenderState
                 { projection = makeProjection width height
-                , camera = initCamera
                 , model = model'
+                , backdrop = backdrop'
+                , camera = initCamera
                 , screenWidth = width
                 , screenHeight = height
                 , timestamp = 0
@@ -90,17 +100,23 @@ renderFrame :: IORef RenderState -> IO ()
 renderFrame ref = do
     state <- readIORef ref
 
+    -- Render stuff with the current state.
+    GL.glViewport 0 0 (screenWidth state) (screenHeight state)
+    GL.glClear [ColorBuffer, DepthBuffer]
+
+    -- Render the model. Render in wireframe if needed.
     if renderWireframe state
         then GL.glPolygonMode FrontAndBack Line
         else GL.glPolygonMode FrontAndBack Fill
 
-    -- Render stuff with the current state.
-    GL.glViewport 0 0 (screenWidth state) (screenHeight state)
-    GL.glClear [ColorBuffer, DepthBuffer]
-    render (projection state)
-           (view $ camera state)
-           (lightning state)
-           (model state)
+    render (projection state) (view $ camera state)
+           (lightning state) (model state)
+
+    -- Always reset to fill mode after model rendering.
+    GL.glPolygonMode FrontAndBack Fill
+
+    -- Render the backdrop.
+    Backdrop.render (projection state) (view $ camera state) (backdrop state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime
