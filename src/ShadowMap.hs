@@ -6,20 +6,46 @@ module ShadowMap
     ) where
 
 import           Foreign       (nullPtr)
-import           Graphics.LWGL
+import           Graphics.LWGL (DrawBufferMode (..), FrameBuffer (..),
+                                FrameBufferAttachment (..),
+                                FrameBufferTarget (..), GLfloat,
+                                ImageComponentCount (..), Location,
+                                PixelFormat (..), PixelType (..), Program,
+                                ShaderType (..), Texture,
+                                TextureParameterName (..),
+                                TextureParameterValue (..), TextureTarget (..))
 import qualified Graphics.LWGL as GL
+import           Linear
 import           Prelude       hiding (init)
 
 data ShadowMap = ShadowMap
-    { fbo     :: !FrameBuffer
-    , texture :: !Texture
+    { program    :: !Program
+    , mvpLoc     :: !Location
+    , projection :: !(M44 GLfloat)
+    , fbo        :: !FrameBuffer
+    , texture    :: !Texture
     }
     deriving Show
 
 init :: IO (Either String ShadowMap)
 init = do
-    (fbo', texture') <- makeFramebuffer
-    return $ Right ShadowMap { fbo = fbo', texture = texture' }
+    prog <- GL.loadShaders [ (VertexShader, "shaders/shadowmap.vert")
+                           , (FragmentShader, "shaders/shadowmap.frag")
+                           ]
+    case prog of
+        Right prog' -> do
+            (fbo', texture') <- makeFramebuffer
+            mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
+            return $ Right
+                ShadowMap
+                    { program = prog'
+                    , mvpLoc = mvpLoc'
+                    , projection = ortho (-10) 10 (-10) 10 0.1 30
+                    , fbo = fbo'
+                    , texture = texture'
+                    }
+
+        Left err -> return $ Left err
 
 shadowWidth :: Int
 shadowWidth = 1024

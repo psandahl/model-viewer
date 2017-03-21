@@ -36,7 +36,7 @@ init lightPos' lightColor' =
 -- | The default position of the ligth. In model space the ligth is to the left
 -- of the scene. No height, no depth.
 defaultPosition :: V3 GLfloat
-defaultPosition = V3 (-10) 0 0
+defaultPosition = V3 (-10) 0 0 -- Have no further away than ten due to shadows.
 
 -- | The color white.
 whiteColor :: V3 GLfloat

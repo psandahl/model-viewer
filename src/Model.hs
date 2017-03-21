@@ -4,6 +4,7 @@ module Model
     , rotateLeft
     , rotateRight
     , render
+    , renderShadowMap
     ) where
 
 import           Control.Monad (when)
@@ -20,6 +21,8 @@ import           Linear        (M44, V3 (..), axisAngle, mkTransformation,
 import           Lightning     (Lightning (..))
 import           ModelSpec     (ModelSpec)
 import qualified ModelSpec     as Spec
+import           ShadowMap     (ShadowMap)
+import qualified ShadowMap
 
 data Model = Model
     { program             :: !Program
@@ -89,6 +92,19 @@ render projection view lightning model = do
         GL.glUniform1i samplerLoc' 0
 
     -- Draw the model.
+    GL.drawTrianglesVector (indices $ mesh model)
+
+    GL.glBindVertexArray (VertexArrayObject 0)
+
+renderShadowMap :: ShadowMap -> Lightning -> Model -> IO ()
+renderShadowMap shadowMap lightning model = do
+    GL.glUseProgram (ShadowMap.program shadowMap)
+    GL.glBindVertexArray (vao $ mesh model)
+
+    let mvp = ShadowMap.projection shadowMap !*! Lightning.lightView lightning
+                  !*! matrix model
+    GL.setMatrix4 (ShadowMap.mvpLoc shadowMap) mvp
+
     GL.drawTrianglesVector (indices $ mesh model)
 
     GL.glBindVertexArray (VertexArrayObject 0)

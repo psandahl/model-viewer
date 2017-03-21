@@ -18,9 +18,8 @@ import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
 import           Input            (initInput)
 import qualified Lightning
-import           Model            (loadModel, render)
+import           Model            (loadModel, render, renderShadowMap)
 import           RenderState      (RenderState (..))
-import           ShadowMap        (ShadowMap (..), shadowHeight, shadowWidth)
 import qualified ShadowMap
 
 createGLContext :: Bool -> IO (Window, Int, Int)
@@ -113,9 +112,12 @@ renderFrame ref = do
     state <- readIORef ref
 
     -- Render the model in the shadow map.
-    GL.glViewport 0 0 shadowWidth shadowHeight
-    GL.glBindFramebuffer GLFrameBuffer (fbo $ shadowMap state)
+    GL.glViewport 0 0 ShadowMap.shadowWidth ShadowMap.shadowHeight
+    GL.glBindFramebuffer GLFrameBuffer (ShadowMap.fbo $ shadowMap state)
     GL.glClear [DepthBuffer]
+
+    renderShadowMap (shadowMap state) (lightning state) (model state)
+
     GL.glBindFramebuffer GLFrameBuffer (FrameBuffer 0)
 
     -- Render stuff with the current state in the screen buffers.
@@ -135,7 +137,7 @@ renderFrame ref = do
 
     -- Render the backdrop.
     Backdrop.render (projection state) (view $ camera state)
-                    (texture $ shadowMap state) (backdrop state)
+                    (ShadowMap.texture $ shadowMap state) (backdrop state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime
