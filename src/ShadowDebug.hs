@@ -1,5 +1,5 @@
-module Backdrop
-    ( Backdrop (..)
+module ShadowDebug
+    ( ShadowDebug (..)
     , init
     , render
     ) where
@@ -18,18 +18,18 @@ import           Prelude                         hiding (init)
 
 import           Helper                          (makeTranslate)
 
-data Backdrop = Backdrop
-    { program      :: !Program
-    , mvpLoc       :: !Location
-    , shadowMapLoc :: !Location
-    , mesh         :: !Mesh
-    , backdropPos  :: !(V3 GLfloat)
+data ShadowDebug = ShadowDebug
+    { program        :: !Program
+    , mvpLoc         :: !Location
+    , shadowMapLoc   :: !Location
+    , mesh           :: !Mesh
+    , shadowDebugPos :: !(V3 GLfloat)
     } deriving Show
 
-init :: IO (Either String Backdrop)
+init :: IO (Either String ShadowDebug)
 init = do
-    prog <- loadShaders [ (VertexShader, "shaders/backdrop.vert")
-                        , (FragmentShader, "shaders/backdrop.frag")
+    prog <- loadShaders [ (VertexShader, "shaders/shadowdebug.vert")
+                        , (FragmentShader, "shaders/shadowdebug.frag")
                         ]
     case prog of
         Right prog' -> do
@@ -37,29 +37,29 @@ init = do
             mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
             shadowMapLoc' <- GL.glGetUniformLocation prog' "shadowMap"
             return $ Right
-                Backdrop
+                ShadowDebug
                     { program = prog'
                     , mvpLoc = mvpLoc'
                     , shadowMapLoc = shadowMapLoc'
                     , mesh = mesh'
-                    , backdropPos = V3 (-1.5) (-1.2) 0
+                    , shadowDebugPos = V3 (-1.5) (-1.2) 0
                     }
         Left err -> return $ Left err
 
-render :: M44 GLfloat -> M44 GLfloat -> Texture -> Backdrop -> IO ()
-render proj view texture backdrop = do
-    let model = makeTranslate $ backdropPos backdrop
+render :: M44 GLfloat -> M44 GLfloat -> Texture -> ShadowDebug -> IO ()
+render proj view texture shadowDebug = do
+    let model = makeTranslate $ shadowDebugPos shadowDebug
         mvp = proj !*! view !*! model
 
-    GL.glUseProgram (program backdrop)
-    GL.glBindVertexArray (vao $ mesh backdrop)
-    GL.setMatrix4 (mvpLoc backdrop) mvp
+    GL.glUseProgram (program shadowDebug)
+    GL.glBindVertexArray (vao $ mesh shadowDebug)
+    GL.setMatrix4 (mvpLoc shadowDebug) mvp
 
     GL.glActiveTexture (TextureUnit 0)
     GL.glBindTexture Texture2D texture
-    GL.glUniform1i (shadowMapLoc backdrop) 0
+    GL.glUniform1i (shadowMapLoc shadowDebug) 0
 
-    GL.drawTrianglesVector (indices $ mesh backdrop)
+    GL.drawTrianglesVector (indices $ mesh shadowDebug)
 
     GL.glBindVertexArray (VertexArrayObject 0)
 

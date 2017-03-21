@@ -12,7 +12,6 @@ import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit      (exitFailure)
 
-import qualified Backdrop
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
@@ -20,6 +19,7 @@ import           Input            (initInput)
 import qualified Lightning
 import           Model            (loadModel, render, renderShadowMap)
 import           RenderState      (RenderState (..))
+import qualified ShadowDebug
 import qualified ShadowMap
 
 createGLContext :: Bool -> IO (Window, Int, Int)
@@ -60,22 +60,22 @@ createRenderState file width height = do
         GLFW.terminate
         exitFailure
 
-    eBackdrop <- Backdrop.init
-    when (isLeft eBackdrop) $ do
-        let Left err = eBackdrop
+    eShadowDebug <- ShadowDebug.init
+    when (isLeft eShadowDebug) $ do
+        let Left err = eShadowDebug
         putStrLn err
         GLFW.terminate
         exitFailure
 
     let Right model' = eModel
         Right shadowMap' = eShadowMap
-        Right backdrop' = eBackdrop
+        Right shadowDebug' = eShadowDebug
         state =
             RenderState
                 { projection = makeProjection width height
                 , model = model'
                 , shadowMap = shadowMap'
-                , backdrop = backdrop'
+                , shadowDebug = shadowDebug'
                 , camera = initCamera
                 , screenWidth = width
                 , screenHeight = height
@@ -135,9 +135,9 @@ renderFrame ref = do
     -- Always reset to fill mode after model rendering.
     GL.glPolygonMode FrontAndBack Fill
 
-    -- Render the backdrop.
-    Backdrop.render (projection state) (view $ camera state)
-                    (ShadowMap.texture $ shadowMap state) (backdrop state)
+    -- Render the debug display.
+    ShadowDebug.render (projection state) (view $ camera state)
+                       (ShadowMap.texture $ shadowMap state) (shadowDebug state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime
