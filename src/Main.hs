@@ -56,6 +56,8 @@ createRenderState file width height = do
                 { projection = makeProjection width height
                 , camera = initCamera
                 , model = model'
+                , screenWidth = width
+                , screenHeight = height
                 , timestamp = 0
                 , frameDuration = 0
                 , mousePosition = Nothing
@@ -73,7 +75,6 @@ main = do
 
     ref <- createRenderState "example-files/testmodel.json" width height
 
-    GL.glViewport 0 0 width height
     GL.glClearColor (135.0 / 255.0) (206.0 / 255.0) (250.0 / 255.0) 0
     GL.glEnable DepthTest
     GL.glPolygonMode FrontAndBack Line
@@ -94,6 +95,7 @@ renderFrame ref = do
         else GL.glPolygonMode FrontAndBack Fill
 
     -- Render stuff with the current state.
+    GL.glViewport 0 0 (screenWidth state) (screenHeight state)
     GL.glClear [ColorBuffer, DepthBuffer]
     render (projection state)
            (view $ camera state)

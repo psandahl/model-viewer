@@ -83,4 +83,7 @@ windowSizeCallback :: IORef RenderState -> Window -> Int -> Int -> IO ()
 windowSizeCallback ref _window width height = do
     GL.glViewport 0 0 width height
     modifyIORef ref $ \state ->
-        state { projection = makeProjection width height }
+        state { projection = makeProjection width height
+              , screenWidth = width
+              , screenHeight = height
+              }

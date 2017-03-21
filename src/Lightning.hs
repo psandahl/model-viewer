@@ -6,12 +6,13 @@ module Lightning
     ) where
 
 import           Graphics.LWGL (GLfloat)
-import           Linear        (V3 (..), normalize)
+import           Linear        (M44, V3 (..), lookAt, normalize)
 import           Prelude       hiding (init)
 
 data Lightning = Lightning
     { lightDir         :: !(V3 GLfloat)
     , lightPos         :: !(V3 GLfloat)
+    , lightView        :: !(M44 GLfloat)
     , lightColor       :: !(V3 GLfloat)
     , ambientStrength  :: !Float
     , specularStrength :: !Float
@@ -25,6 +26,7 @@ init lightPos' lightColor' =
     Lightning
         { lightDir = negate $ lightFromTo lightPos' origo
         , lightPos = lightPos'
+        , lightView = lookAt lightPos' origo (V3 0 1 0)
         , lightColor = lightColor'
         , ambientStrength = 0.15
         , specularStrength = 2.0
