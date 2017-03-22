@@ -16,7 +16,8 @@ extra-source-files:  README.md
 executable model-viewer
   hs-source-dirs:      src
   main-is:             Main.hs
-  other-modules:       Camera
+  other-modules:       Backdrop
+                       Camera
                        EventLoop
                        Helper
                        Input
