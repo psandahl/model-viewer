@@ -150,8 +150,8 @@ renderFrame ref = do
                     (lightning state) (shadowMap state) (backdrop state)
 
     -- Render the debug display.
-    ShadowDebug.render (projection state) (view $ camera state)
-                       (ShadowMap.texture $ shadowMap state) (shadowDebug state)
+    --ShadowDebug.render (projection state) (view $ camera state)
+    --                   (ShadowMap.texture $ shadowMap state) (shadowDebug state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime

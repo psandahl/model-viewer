@@ -45,8 +45,22 @@ vec3 calcSpecularColor()
   return specular * specularStrength * lightColor;
 }
 
+float calcShadow()
+{
+  vec3 projCoords = vPositionLightSpace.xyz / vPositionLightSpace.w;
+  // Transform from [-1,1] range to [0,1] range.
+  projCoords = projCoords * 0.5 + 0.5;
+  float closestDepth = texture(shadowMap, projCoords.xy).r;
+  float currentDepth = projCoords.z;
+
+  // If the current position of further away than the closestDepth, we are
+  // in shadow (== 1.0).
+  return currentDepth > closestDepth ? 1.0 : 0.0;
+}
+
 void main()
 {
-  vec3 finalColor = grey * (calcAmbientColor() + calcDiffuseColor() + calcSpecularColor());
+  vec3 finalColor = grey *
+    (calcAmbientColor() + (1.0 - calcShadow()) * (calcDiffuseColor() + calcSpecularColor()));
   color = vec4(finalColor, 1.0);
 }
