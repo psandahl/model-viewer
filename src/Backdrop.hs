@@ -20,6 +20,7 @@ import           Lightning                   (Lightning (..))
 data Backdrop = Backdrop
     { program             :: !Program
     , mvpLoc              :: !Location
+    , viewLoc             :: !Location
     , modelLoc            :: !Location
     , lightDirLoc         :: !Location
     , lightColorLoc       :: !Location
@@ -39,6 +40,7 @@ init = do
         Right prog' -> do
             mesh' <- buildFromList StaticDraw vertices indices'
             mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
+            viewLoc' <- GL.glGetUniformLocation prog' "view"
             modelLoc' <- GL.glGetUniformLocation prog' "model"
             lightDirLoc' <- GL.glGetUniformLocation prog' "lightDir"
             lightColorLoc' <- GL.glGetUniformLocation prog' "lightColor"
@@ -49,6 +51,7 @@ init = do
                 Backdrop
                     { program = prog'
                     , mvpLoc = mvpLoc'
+                    , viewLoc = viewLoc'
                     , modelLoc = modelLoc'
                     , lightDirLoc = lightDirLoc'
                     , lightColorLoc = lightColorLoc'
@@ -69,6 +72,7 @@ render proj view lightning backdrop = do
     GL.glUseProgram (program backdrop)
     GL.glBindVertexArray (vao $ mesh backdrop)
     GL.setMatrix4 (mvpLoc backdrop) mvp
+    GL.setMatrix4 (viewLoc backdrop) view
     GL.setMatrix4 (modelLoc backdrop) model'
     GL.setVector3 (lightDirLoc backdrop) (lightDir lightning)
     GL.setVector3 (lightColorLoc backdrop) (lightColor lightning)
