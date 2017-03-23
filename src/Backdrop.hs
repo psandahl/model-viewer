@@ -26,7 +26,6 @@ data Backdrop = Backdrop
     , lightColorLoc       :: !Location
     , ambientStrengthLoc  :: !Location
     , specularStrengthLoc :: !Location
-    , specularShineLoc    :: !Location
     , model               :: !(M44 GLfloat)
     , mesh                :: !Mesh
     } deriving Show
@@ -46,7 +45,6 @@ init = do
             lightColorLoc' <- GL.glGetUniformLocation prog' "lightColor"
             ambientStrengthLoc' <- GL.glGetUniformLocation prog' "ambientStrength"
             specularStrengthLoc' <- GL.glGetUniformLocation prog' "specularStrength"
-            specularShineLoc' <- GL.glGetUniformLocation prog' "specularShine"
             return $ Right
                 Backdrop
                     { program = prog'
@@ -57,7 +55,6 @@ init = do
                     , lightColorLoc = lightColorLoc'
                     , ambientStrengthLoc = ambientStrengthLoc'
                     , specularStrengthLoc = specularStrengthLoc'
-                    , specularShineLoc = specularShineLoc'
                     , model = m33_to_m44 $ scaled (scaleVector 5)
                     , mesh = mesh'
                     }
@@ -78,7 +75,6 @@ render proj view lightning backdrop = do
     GL.setVector3 (lightColorLoc backdrop) (lightColor lightning)
     GL.glUniform1f (ambientStrengthLoc backdrop) (ambientStrength lightning)
     GL.glUniform1f (specularStrengthLoc backdrop) (specularStrength lightning)
-    GL.glUniform1i (specularShineLoc backdrop) (specularShine lightning)
 
     GL.drawTrianglesVector (indices $ mesh backdrop)
 
