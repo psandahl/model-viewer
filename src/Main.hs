@@ -12,6 +12,7 @@ import           Graphics.UI.GLFW (OpenGLProfile (..), StickyKeysInputMode (..),
 import qualified Graphics.UI.GLFW as GLFW
 import           System.Exit      (exitFailure)
 
+import qualified Backdrop
 import           Camera           (Camera (view), initCamera)
 import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
@@ -60,6 +61,13 @@ createRenderState file width height = do
         GLFW.terminate
         exitFailure
 
+    eBackdrop <- Backdrop.init
+    when (isLeft eBackdrop) $ do
+        let Left err = eBackdrop
+        putStrLn err
+        GLFW.terminate
+        exitFailure
+
     eShadowDebug <- ShadowDebug.init
     when (isLeft eShadowDebug) $ do
         let Left err = eShadowDebug
@@ -69,12 +77,14 @@ createRenderState file width height = do
 
     let Right model' = eModel
         Right shadowMap' = eShadowMap
+        Right backdrop' = eBackdrop
         Right shadowDebug' = eShadowDebug
         state =
             RenderState
                 { projection = makeProjection width height
                 , model = model'
                 , shadowMap = shadowMap'
+                , backdrop = backdrop'
                 , shadowDebug = shadowDebug'
                 , camera = initCamera
                 , screenWidth = width
@@ -134,6 +144,9 @@ renderFrame ref = do
 
     -- Always reset to fill mode after model rendering.
     GL.glPolygonMode FrontAndBack Fill
+
+    -- Render the backdrop.
+    Backdrop.render (projection state) (view $ camera state) (backdrop state)
 
     -- Render the debug display.
     ShadowDebug.render (projection state) (view $ camera state)
