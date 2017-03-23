@@ -146,7 +146,8 @@ renderFrame ref = do
     GL.glPolygonMode FrontAndBack Fill
 
     -- Render the backdrop.
-    Backdrop.render (projection state) (view $ camera state) (backdrop state)
+    Backdrop.render (projection state) (view $ camera state)
+                    (lightning state) (backdrop state)
 
     -- Render the debug display.
     ShadowDebug.render (projection state) (view $ camera state)
