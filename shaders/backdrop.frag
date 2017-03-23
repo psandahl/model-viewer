@@ -27,17 +27,15 @@ vec3 calcAmbientColor()
   return lightColor * ambientStrength;
 }
 
-vec3 calcDiffuseColor()
+vec3 calcDiffuseColor(vec3 normal)
 {
-  vec3 normal = normalize(vNormal);
   float diffuse = max(dot(normal, transformLightDir()), 0.0);
 
   return diffuse * lightColor;
 }
 
-vec3 calcSpecularColor()
+vec3 calcSpecularColor(vec3 normal)
 {
-  vec3 normal = normalize(vNormal);
   vec3 reflectDir = reflect(-transformLightDir(), normal);
   vec3 viewDir = normalize(vec3(0) - vPosition);
   float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32);
@@ -45,13 +43,12 @@ vec3 calcSpecularColor()
   return specular * specularStrength * lightColor;
 }
 
-float shadowBias()
+float shadowBias(vec3 normal)
 {
-  vec3 normal = normalize(vNormal);
   return max(0.05 * (1.0 - dot(normal, transformLightDir())), 0.005);
 }
 
-float calcShadow()
+float calcShadow(vec3 normal)
 {
   vec3 projCoords = vPositionLightSpace.xyz / vPositionLightSpace.w;
   // Transform from [-1,1] range to [0,1] range.
@@ -61,10 +58,10 @@ float calcShadow()
 
   // If the current position of further away than the closestDepth, we are
   // in shadow.
-  return currentDepth - shadowBias() > closestDepth ? 1.0 : 0.0;
+  return currentDepth - shadowBias(normal) > closestDepth ? 1.0 : 0.0;
 }
 
-float calcPCFShadow()
+float calcPCFShadow(vec3 normal)
 {
   vec3 projCoords = vPositionLightSpace.xyz / vPositionLightSpace.w;
   projCoords = projCoords * 0.5 + 0.5;
@@ -72,7 +69,7 @@ float calcPCFShadow()
 
   vec2 texelSize = 1.0 / textureSize(shadowMap, 0);
   float shadow = 0.0;
-  float bias = shadowBias();
+  float bias = shadowBias(normal);
   for (int x = -1; x <= 1; ++x)
   {
     for (int y = -1; y <= 1; ++y)
@@ -89,12 +86,17 @@ void main()
 {
   if (gl_FrontFacing)
   {
+    vec3 normal = normalize(vNormal);
     vec3 finalColor = grey *
-      (calcAmbientColor() + (1.0 - calcPCFShadow()) * (calcDiffuseColor() + calcSpecularColor()));
+      (calcAmbientColor() +
+        (1.0 - calcPCFShadow(normal)) *
+               (calcDiffuseColor(normal) + calcSpecularColor(normal)));
     color = vec4(finalColor, 1.0);
   }
   else
-  {
-    color = vec4(1.0, 0.0, 0.0, 1.0);
+  { vec3 normal = -normalize(vNormal);
+    vec3 finalColor = grey * (calcAmbientColor() + calcDiffuseColor(normal) + calcSpecularColor(normal));
+
+    color = vec4(finalColor, 1.0);
   }
 }
