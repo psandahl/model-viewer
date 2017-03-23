@@ -11,7 +11,9 @@ out vec3 vNormal;
 
 void main()
 {
+  // Contrary to the model shaders the lightning for the backdrop is
+  // made in world space.
   vPosition = (model * vec4(position, 1.0)).xyz;
-  vNormal = (model * vec4(position, 0.0)).xyz;
+  vNormal = (model * vec4(normal, 0.0)).xyz;
   gl_Position = mvp * vec4(position, 1.0);
 }

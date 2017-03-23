@@ -102,9 +102,27 @@ vertices =
         { position = V3 1 (-1) 1
         , normal = V3 (-1) 0 0
         }
+    -- Vertices for the 'back' wall. Start at index 4.
+    , Vertex
+        { position = V3 1 1 (-1)
+        , normal = V3 0 0 1
+        }
+    , Vertex
+        { position = V3 (-1) 1 (-1)
+        , normal = V3 0 0 1
+        }
+    , Vertex
+        { position = V3 (-1) (-1) (-1)
+        , normal = V3 0 0 1
+        }
+    , Vertex
+        { position = V3 1 (-1) (-1)
+        , normal = V3 0 0 1
+        }
     ]
 
 indices' :: [GLuint]
 indices' =
-    [ 0, 1, 2, 0, 2, 3 -- Right face
+    [ 0, 1, 2, 0, 2, 3 -- Right wall
+    , 4, 5, 6, 4, 6, 7 -- Back wall
     ]

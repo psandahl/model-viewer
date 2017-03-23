@@ -13,7 +13,20 @@ out vec4 color;
 
 const vec3 grey = vec3(192.0 / 255.0);
 
+vec3 calcAmbientColor()
+{
+  return lightColor * ambientStrength;
+}
+
+vec3 calcDiffuseColor()
+{
+  vec3 normal = normalize(vNormal);
+  float diffuse = max(dot(normal, lightDir), 0.0);
+  return lightColor * diffuse;
+}
+
 void main()
 {
-  color = vec4(grey, 1);
+  vec3 finalColor = grey * (calcAmbientColor() + calcDiffuseColor());
+  color = vec4(finalColor, 1);
 }
