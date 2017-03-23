@@ -2,12 +2,15 @@
 
 in vec3 vPosition;
 in vec3 vNormal;
+in vec4 vPositionLightSpace;
 
 uniform mat4 view;
 uniform vec3 lightDir;
 uniform vec3 lightColor;
 uniform float ambientStrength;
 uniform float specularStrength;
+
+uniform sampler2D shadowMap;
 
 out vec4 color;
 

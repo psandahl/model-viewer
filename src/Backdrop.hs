@@ -7,6 +7,8 @@ module Backdrop
 import           Graphics.LWGL               (BufferUsage (..), GLfloat, GLuint,
                                               Location, Mesh (..), Program,
                                               ShaderType (..),
+                                              TextureTarget (..),
+                                              TextureUnit (..),
                                               VertexArrayObject (..),
                                               buildFromList, loadShaders)
 import qualified Graphics.LWGL               as GL
@@ -16,16 +18,19 @@ import           Linear                      (M44, V3 (..), m33_to_m44, scaled,
 import           Prelude                     hiding (init)
 
 import           Lightning                   (Lightning (..))
+import           ShadowMap                   (ShadowMap (projection, texture))
 
 data Backdrop = Backdrop
     { program             :: !Program
     , mvpLoc              :: !Location
     , viewLoc             :: !Location
     , modelLoc            :: !Location
+    , lightVPLoc          :: !Location
     , lightDirLoc         :: !Location
     , lightColorLoc       :: !Location
     , ambientStrengthLoc  :: !Location
     , specularStrengthLoc :: !Location
+    , shadowMapLoc        :: !Location
     , model               :: !(M44 GLfloat)
     , mesh                :: !Mesh
     } deriving Show
@@ -41,40 +46,50 @@ init = do
             mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
             viewLoc' <- GL.glGetUniformLocation prog' "view"
             modelLoc' <- GL.glGetUniformLocation prog' "model"
+            lightVPLoc' <- GL.glGetUniformLocation prog' "lightVP"
             lightDirLoc' <- GL.glGetUniformLocation prog' "lightDir"
             lightColorLoc' <- GL.glGetUniformLocation prog' "lightColor"
             ambientStrengthLoc' <- GL.glGetUniformLocation prog' "ambientStrength"
             specularStrengthLoc' <- GL.glGetUniformLocation prog' "specularStrength"
+            shadowMapLoc' <- GL.glGetUniformLocation prog' "shadowMap"
             return $ Right
                 Backdrop
                     { program = prog'
                     , mvpLoc = mvpLoc'
                     , viewLoc = viewLoc'
                     , modelLoc = modelLoc'
+                    , lightVPLoc = lightVPLoc'
                     , lightDirLoc = lightDirLoc'
                     , lightColorLoc = lightColorLoc'
                     , ambientStrengthLoc = ambientStrengthLoc'
                     , specularStrengthLoc = specularStrengthLoc'
+                    , shadowMapLoc = shadowMapLoc'
                     , model = m33_to_m44 $ scaled (scaleVector 5)
                     , mesh = mesh'
                     }
 
         Left err -> return $ Left err
 
-render :: M44 GLfloat -> M44 GLfloat -> Lightning -> Backdrop -> IO ()
-render proj view lightning backdrop = do
+render :: M44 GLfloat -> M44 GLfloat -> Lightning -> ShadowMap -> Backdrop -> IO ()
+render proj view lightning shadowMap backdrop = do
     let model' = model backdrop
         mvp = proj !*! view !*! model'
+        lightVP = projection shadowMap !*! lightView lightning
 
     GL.glUseProgram (program backdrop)
     GL.glBindVertexArray (vao $ mesh backdrop)
     GL.setMatrix4 (mvpLoc backdrop) mvp
     GL.setMatrix4 (viewLoc backdrop) view
     GL.setMatrix4 (modelLoc backdrop) model'
+    GL.setMatrix4 (lightVPLoc backdrop) lightVP
     GL.setVector3 (lightDirLoc backdrop) (lightDir lightning)
     GL.setVector3 (lightColorLoc backdrop) (lightColor lightning)
     GL.glUniform1f (ambientStrengthLoc backdrop) (ambientStrength lightning)
     GL.glUniform1f (specularStrengthLoc backdrop) (specularStrength lightning)
+
+    GL.glActiveTexture (TextureUnit 0)
+    GL.glBindTexture Texture2D (texture shadowMap)
+    GL.glUniform1i (shadowMapLoc backdrop) 0
 
     GL.drawTrianglesVector (indices $ mesh backdrop)
 

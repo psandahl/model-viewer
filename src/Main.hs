@@ -147,7 +147,7 @@ renderFrame ref = do
 
     -- Render the backdrop.
     Backdrop.render (projection state) (view $ camera state)
-                    (lightning state) (backdrop state)
+                    (lightning state) (shadowMap state) (backdrop state)
 
     -- Render the debug display.
     ShadowDebug.render (projection state) (view $ camera state)
