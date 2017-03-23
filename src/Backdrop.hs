@@ -64,7 +64,7 @@ init = do
                     , ambientStrengthLoc = ambientStrengthLoc'
                     , specularStrengthLoc = specularStrengthLoc'
                     , shadowMapLoc = shadowMapLoc'
-                    , model = m33_to_m44 $ scaled (scaleVector 5)
+                    , model = m33_to_m44 $ scaled (scaleVector 20)
                     , mesh = mesh'
                     }
 
