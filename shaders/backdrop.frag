@@ -87,7 +87,14 @@ float calcPCFShadow()
 
 void main()
 {
-  vec3 finalColor = grey *
-    (calcAmbientColor() + (1.0 - calcPCFShadow()) * (calcDiffuseColor() + calcSpecularColor()));
-  color = vec4(finalColor, 1.0);
+  if (gl_FrontFacing)
+  {
+    vec3 finalColor = grey *
+      (calcAmbientColor() + (1.0 - calcPCFShadow()) * (calcDiffuseColor() + calcSpecularColor()));
+    color = vec4(finalColor, 1.0);
+  }
+  else
+  {
+    color = vec4(1.0, 0.0, 0.0, 1.0);
+  }
 }

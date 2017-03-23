@@ -134,10 +134,28 @@ vertices =
         { position = V3 1 (-1) (-1)
         , normal = V3 0 0 1
         }
+    -- Vertices for the 'left' wall. Start at index 8.
+    , Vertex
+        { position = V3 (-1) 1 (-1)
+        , normal = V3 1 0 0
+        }
+    , Vertex
+        { position = V3 (-1) 1 1
+        , normal = V3 1 0 0
+        }
+    , Vertex
+        { position = V3 (-1) (-1) 1
+        , normal = V3 1 0 0
+        }
+    , Vertex
+        { position = V3 (-1) (-1) (-1)
+        , normal = V3 1 0 0
+        }
     ]
 
 indices' :: [GLuint]
 indices' =
     [ 0, 1, 2, 0, 2, 3 -- Right wall
     , 4, 5, 6, 4, 6, 7 -- Back wall
+    , 8, 9, 10, 8, 10, 11 -- Left wall
     ]
