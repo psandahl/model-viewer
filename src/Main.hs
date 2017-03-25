@@ -94,6 +94,7 @@ main = do
 
     GL.glClearColor 0 0 0.4 0
     GL.glEnable DepthTest
+    GL.glEnable MultiSample
 
     initInput window ref
 
