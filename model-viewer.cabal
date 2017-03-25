@@ -24,6 +24,7 @@ executable model-viewer
                        Model
                        ModelSpec
                        Lightning
+                       Options
                        RenderState
                        ShadowMap
                        ShadowDebug
@@ -36,4 +37,5 @@ executable model-viewer
                      , light-weight-opengl
                      , light-weight-opengl-obj
                      , linear
+                     , optparse-applicative
                      , vector

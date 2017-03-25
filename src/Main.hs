@@ -19,6 +19,7 @@ import           Helper           (makeProjection)
 import           Input            (initInput)
 import qualified Lightning
 import           Model            (loadModel, render, renderShadowMap)
+import           Options          (Options (..), options)
 import           RenderState      (RenderState (..))
 import qualified ShadowDebug
 import qualified ShadowMap
@@ -48,32 +49,16 @@ createGLContext fullscreen = do
 createRenderState :: FilePath -> Int -> Int -> IO (IORef RenderState)
 createRenderState file width height = do
     eModel <- loadModel file
-    when (isLeft eModel) $ do
-        let Left err = eModel
-        putStrLn err
-        GLFW.terminate
-        exitFailure
+    bailLeft eModel
 
     eShadowMap <- ShadowMap.init
-    when (isLeft eShadowMap) $ do
-        let Left err = eShadowMap
-        putStrLn err
-        GLFW.terminate
-        exitFailure
+    bailLeft eShadowMap
 
     eBackdrop <- Backdrop.init
-    when (isLeft eBackdrop) $ do
-        let Left err = eBackdrop
-        putStrLn err
-        GLFW.terminate
-        exitFailure
+    bailLeft eBackdrop
 
     eShadowDebug <- ShadowDebug.init
-    when (isLeft eShadowDebug) $ do
-        let Left err = eShadowDebug
-        putStrLn err
-        GLFW.terminate
-        exitFailure
+    bailLeft eShadowDebug
 
     let Right model' = eModel
         Right shadowMap' = eShadowMap
@@ -100,15 +85,15 @@ createRenderState file width height = do
 
 main :: IO ()
 main = do
-    (window, width, height) <- createGLContext False
+    opts <- options
+    (window, width, height) <- createGLContext $ fullscreenMode opts
     GLFW.makeContextCurrent (Just window)
     GLFW.setStickyKeysInputMode window StickyKeysInputMode'Enabled
 
-    ref <- createRenderState "example-files/testmodel.json" width height
+    ref <- createRenderState (modelFile opts) width height
 
     GL.glClearColor 0 0 0.4 0
     GL.glEnable DepthTest
-    GL.glPolygonMode FrontAndBack Line
 
     initInput window ref
 
@@ -188,6 +173,14 @@ makeFullscreen = do
                 Nothing -> return Nothing
 
         Nothing -> return Nothing
+
+bailLeft :: Either String a -> IO ()
+bailLeft eValue =
+    when (isLeft eValue) $ do
+        let Left err = eValue
+        putStrLn err
+        GLFW.terminate
+        exitFailure
 
 defaultWidth :: Int
 defaultWidth = 1024

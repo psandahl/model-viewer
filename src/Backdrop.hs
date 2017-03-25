@@ -4,22 +4,17 @@ module Backdrop
     , render
     ) where
 
-import           Graphics.LWGL               (BufferUsage (..), GLfloat, GLuint,
-                                              Location, Mesh (..), Program,
-                                              ShaderType (..),
-                                              TextureTarget (..),
-                                              TextureUnit (..),
-                                              VertexArrayObject (..),
-                                              buildFromList, loadShaders)
-import qualified Graphics.LWGL               as GL
-import           Graphics.LWGL.Vertex_P_Norm (Vertex (..))
+import           Graphics.LWGL (BufferUsage (..), GLfloat, Location, Mesh (..),
+                                Program, ShaderType (..), TextureTarget (..),
+                                TextureUnit (..), VertexArrayObject (..),
+                                loadShaders)
+import qualified Graphics.LWGL as GL
 import           Graphics.OBJ
-import           Linear                      (M44, V3 (..), m33_to_m44, scaled,
-                                              (!*!))
-import           Prelude                     hiding (init)
+import           Linear        (M44, V3 (..), m33_to_m44, scaled, (!*!))
+import           Prelude       hiding (init)
 
-import           Lightning                   (Lightning (..))
-import           ShadowMap                   (ShadowMap (projection, texture))
+import           Lightning     (Lightning (..))
+import           ShadowMap     (ShadowMap (projection, texture))
 
 data Backdrop = Backdrop
     { program             :: !Program
@@ -43,7 +38,7 @@ init = do
                         ]
     case prog of
         Right prog' -> do
-            eMesh <- loadMeshFromFile "example-files/sphere.obj"
+            eMesh <- loadMeshFromFile "models/sphere.obj"
             case eMesh of
                 Right mesh' -> do
 
@@ -110,65 +105,3 @@ loadMeshFromFile file = do
         Right (WithNormal vs is) -> Right <$> GL.buildFromVector StaticDraw vs is
         Right _ -> return $ Left "Unsupported format"
         Left err -> return $ Left err
-
-vertices :: [Vertex]
-vertices =
-    [ -- Vertices for the 'right' wall.
-      Vertex
-        { position = V3 1 1 1
-        , normal = V3 (-1) 0 0
-        }
-    , Vertex
-        { position = V3 1 1 (-1)
-        , normal = V3 (-1) 0 0
-        }
-    , Vertex
-        { position = V3 1 (-1) (-1)
-        , normal = V3 (-1) 0 0
-        }
-    , Vertex
-        { position = V3 1 (-1) 1
-        , normal = V3 (-1) 0 0
-        }
-    -- Vertices for the 'back' wall. Start at index 4.
-    , Vertex
-        { position = V3 1 1 (-1)
-        , normal = V3 0 0 1
-        }
-    , Vertex
-        { position = V3 (-1) 1 (-1)
-        , normal = V3 0 0 1
-        }
-    , Vertex
-        { position = V3 (-1) (-1) (-1)
-        , normal = V3 0 0 1
-        }
-    , Vertex
-        { position = V3 1 (-1) (-1)
-        , normal = V3 0 0 1
-        }
-    -- Vertices for the 'left' wall. Start at index 8.
-    , Vertex
-        { position = V3 (-1) 1 (-1)
-        , normal = V3 1 0 0
-        }
-    , Vertex
-        { position = V3 (-1) 1 1
-        , normal = V3 1 0 0
-        }
-    , Vertex
-        { position = V3 (-1) (-1) 1
-        , normal = V3 1 0 0
-        }
-    , Vertex
-        { position = V3 (-1) (-1) (-1)
-        , normal = V3 1 0 0
-        }
-    ]
-
-indices' :: [GLuint]
-indices' =
-    [ 0, 1, 2, 0, 2, 3 -- Right wall
-    , 4, 5, 6, 4, 6, 7 -- Back wall
-    , 8, 9, 10, 8, 10, 11 -- Left wall
-    ]
