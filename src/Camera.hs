@@ -22,7 +22,7 @@ data Camera = Camera
 initCamera :: Camera
 initCamera =
     let angle' = 0
-        distance' = 5
+        distance' = 15
         height' = 0
     in
         Camera { view = makeView $ makeCameraPosition angle' distance' height'

@@ -38,9 +38,9 @@ vec3 calcSpecularColor(vec3 normal)
 {
   vec3 reflectDir = reflect(-transformLightDir(), normal);
   vec3 viewDir = normalize(vec3(0) - vPosition);
-  float specular = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+  float specular = pow(max(dot(viewDir, reflectDir), 0.0), 16);
 
-  return specular * specularStrength * lightColor;
+  return specular * 0.2 * lightColor;
 }
 
 float shadowBias(vec3 normal)
@@ -84,9 +84,9 @@ float calcPCFShadow(vec3 normal)
 
 void main()
 {
-  if (gl_FrontFacing)
+  if (!gl_FrontFacing) // Inside of the backdrop sphere.
   {
-    vec3 normal = normalize(vNormal);
+    vec3 normal = -normalize(vNormal);
     vec3 finalColor = grey *
       (calcAmbientColor() +
         (1.0 - calcPCFShadow(normal)) *
@@ -94,7 +94,7 @@ void main()
     color = vec4(finalColor, 1.0);
   }
   else
-  { vec3 normal = -normalize(vNormal);
+  { vec3 normal = normalize(vNormal);
     vec3 finalColor = grey * (calcAmbientColor() + calcDiffuseColor(normal) + calcSpecularColor(normal));
 
     color = vec4(finalColor, 1.0);

@@ -13,6 +13,7 @@ import           Graphics.LWGL               (BufferUsage (..), GLfloat, GLuint,
                                               buildFromList, loadShaders)
 import qualified Graphics.LWGL               as GL
 import           Graphics.LWGL.Vertex_P_Norm (Vertex (..))
+import           Graphics.OBJ
 import           Linear                      (M44, V3 (..), m33_to_m44, scaled,
                                               (!*!))
 import           Prelude                     hiding (init)
@@ -42,31 +43,35 @@ init = do
                         ]
     case prog of
         Right prog' -> do
-            mesh' <- buildFromList StaticDraw vertices indices'
-            mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
-            viewLoc' <- GL.glGetUniformLocation prog' "view"
-            modelLoc' <- GL.glGetUniformLocation prog' "model"
-            lightVPLoc' <- GL.glGetUniformLocation prog' "lightVP"
-            lightDirLoc' <- GL.glGetUniformLocation prog' "lightDir"
-            lightColorLoc' <- GL.glGetUniformLocation prog' "lightColor"
-            ambientStrengthLoc' <- GL.glGetUniformLocation prog' "ambientStrength"
-            specularStrengthLoc' <- GL.glGetUniformLocation prog' "specularStrength"
-            shadowMapLoc' <- GL.glGetUniformLocation prog' "shadowMap"
-            return $ Right
-                Backdrop
-                    { program = prog'
-                    , mvpLoc = mvpLoc'
-                    , viewLoc = viewLoc'
-                    , modelLoc = modelLoc'
-                    , lightVPLoc = lightVPLoc'
-                    , lightDirLoc = lightDirLoc'
-                    , lightColorLoc = lightColorLoc'
-                    , ambientStrengthLoc = ambientStrengthLoc'
-                    , specularStrengthLoc = specularStrengthLoc'
-                    , shadowMapLoc = shadowMapLoc'
-                    , model = m33_to_m44 $ scaled (scaleVector 20)
-                    , mesh = mesh'
-                    }
+            eMesh <- loadMeshFromFile "example-files/sphere.obj"
+            case eMesh of
+                Right mesh' -> do
+
+                    mvpLoc' <- GL.glGetUniformLocation prog' "mvp"
+                    viewLoc' <- GL.glGetUniformLocation prog' "view"
+                    modelLoc' <- GL.glGetUniformLocation prog' "model"
+                    lightVPLoc' <- GL.glGetUniformLocation prog' "lightVP"
+                    lightDirLoc' <- GL.glGetUniformLocation prog' "lightDir"
+                    lightColorLoc' <- GL.glGetUniformLocation prog' "lightColor"
+                    ambientStrengthLoc' <- GL.glGetUniformLocation prog' "ambientStrength"
+                    specularStrengthLoc' <- GL.glGetUniformLocation prog' "specularStrength"
+                    shadowMapLoc' <- GL.glGetUniformLocation prog' "shadowMap"
+                    return $ Right
+                        Backdrop
+                            { program = prog'
+                            , mvpLoc = mvpLoc'
+                            , viewLoc = viewLoc'
+                            , modelLoc = modelLoc'
+                            , lightVPLoc = lightVPLoc'
+                            , lightDirLoc = lightDirLoc'
+                            , lightColorLoc = lightColorLoc'
+                            , ambientStrengthLoc = ambientStrengthLoc'
+                            , specularStrengthLoc = specularStrengthLoc'
+                            , shadowMapLoc = shadowMapLoc'
+                            , model = m33_to_m44 $ scaled (scaleVector 50)
+                            , mesh = mesh'
+                            }
+                Left err -> return $ Left err
 
         Left err -> return $ Left err
 
@@ -97,6 +102,14 @@ render proj view lightning shadowMap backdrop = do
 
 scaleVector :: GLfloat -> V3 GLfloat
 scaleVector s = V3 s s s
+
+loadMeshFromFile :: FilePath -> IO (Either String Mesh)
+loadMeshFromFile file = do
+    obj <- loadObjFromFile file
+    case obj of
+        Right (WithNormal vs is) -> Right <$> GL.buildFromVector StaticDraw vs is
+        Right _ -> return $ Left "Unsupported format"
+        Left err -> return $ Left err
 
 vertices :: [Vertex]
 vertices =

@@ -40,7 +40,7 @@ init = do
                 ShadowMap
                     { program = prog'
                     , mvpLoc = mvpLoc'
-                    , projection = ortho (-10) 10 (-10) 10 0.1 45
+                    , projection = ortho (-10) 10 (-10) 10 0.1 65
                     , fbo = fbo'
                     , texture = texture'
                     }
