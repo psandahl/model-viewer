@@ -24,6 +24,7 @@ executable model-viewer
                        Model
                        ModelSpec
                        Lightning
+                       Logo
                        Options
                        RenderState
                        ShadowMap

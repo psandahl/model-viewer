@@ -18,6 +18,7 @@ import           EventLoop        (eventLoop)
 import           Helper           (makeProjection)
 import           Input            (initInput)
 import qualified Lightning
+import qualified Logo
 import           Model            (loadModel, render, renderShadowMap)
 import           Options          (Options (..), options)
 import           RenderState      (RenderState (..))
@@ -60,10 +61,14 @@ createRenderState file width height = do
     eShadowDebug <- ShadowDebug.init
     bailLeft eShadowDebug
 
+    eLogo <- Logo.init
+    bailLeft eLogo
+
     let Right model' = eModel
         Right shadowMap' = eShadowMap
         Right backdrop' = eBackdrop
         Right shadowDebug' = eShadowDebug
+        Right logo' = eLogo
         state =
             RenderState
                 { projection = makeProjection width height
@@ -71,6 +76,7 @@ createRenderState file width height = do
                 , shadowMap = shadowMap'
                 , backdrop = backdrop'
                 , shadowDebug = shadowDebug'
+                , logo = logo'
                 , camera = initCamera
                 , screenWidth = width
                 , screenHeight = height
@@ -138,6 +144,9 @@ renderFrame ref = do
     -- Render the debug display.
     --ShadowDebug.render (projection state) (view $ camera state)
     --                   (ShadowMap.texture $ shadowMap state) (shadowDebug state)
+
+    -- Render the logo. Must always be rendered last.
+    Logo.render (logo state)
 
     -- Update the timestamp and duration for the state.
     mTime <- GLFW.getTime

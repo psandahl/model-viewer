@@ -8,6 +8,7 @@ import           Linear        (M44)
 import           Backdrop      (Backdrop)
 import           Camera        (Camera)
 import           Lightning     (Lightning)
+import           Logo          (Logo)
 import           Model         (Model)
 import           ShadowDebug   (ShadowDebug)
 import           ShadowMap     (ShadowMap)
@@ -18,6 +19,7 @@ data RenderState = RenderState
     , shadowMap       :: !ShadowMap
     , backdrop        :: !Backdrop
     , shadowDebug     :: !ShadowDebug
+    , logo            :: !Logo
     , camera          :: !Camera
     , screenWidth     :: !Int
     , screenHeight    :: !Int
