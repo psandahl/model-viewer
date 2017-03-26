@@ -6,7 +6,10 @@ module Logo
 
 import           Graphics.LWGL              (BufferUsage (..), GLfloat, GLuint,
                                              Location, Mesh (..), Program (..),
-                                             ShaderType (..),
+                                             ShaderType (..), Texture,
+                                             TextureFormat (..),
+                                             TextureTarget (..),
+                                             TextureUnit (..),
                                              VertexArrayObject (..))
 import qualified Graphics.LWGL              as GL
 import           Graphics.LWGL.Vertex_P_Tex (Vertex (..))
@@ -15,10 +18,12 @@ import           Linear                     (M44, V2 (..), V3 (..), V4 (..),
 import           Prelude                    hiding (init)
 
 data Logo = Logo
-    { program  :: !Program
-    , modelLoc :: !Location
-    , mesh     :: !Mesh
-    , model    :: !(M44 GLfloat)
+    { program     :: !Program
+    , logoTexture :: !Texture
+    , modelLoc    :: !Location
+    , logoLoc     :: !Location
+    , mesh        :: !Mesh
+    , model       :: !(M44 GLfloat)
     } deriving Show
 
 init :: IO (Either String Logo)
@@ -29,15 +34,24 @@ init = do
     case prog of
         Right prog' -> do
 
-            mesh' <- GL.buildFromList StaticDraw vertices indices'
-            modelLoc' <- GL.glGetUniformLocation prog' "model"
+            tex <- GL.loadTexture2D RGBA8 True "textures/logo.png"
+            case tex of
+                Right tex' -> do
 
-            return $ Right Logo
-                { program = prog'
-                , modelLoc = modelLoc'
-                , mesh = mesh'
-                , model = mkTrans (-0.75) 0.75 !*! mkScale 0.25 0.25
-                }
+                    mesh' <- GL.buildFromList StaticDraw vertices indices'
+                    modelLoc' <- GL.glGetUniformLocation prog' "model"
+                    logoLoc' <- GL.glGetUniformLocation prog' "logo"
+
+                    return $ Right Logo
+                        { program = prog'
+                        , logoTexture = tex'
+                        , modelLoc = modelLoc'
+                        , logoLoc = logoLoc'
+                        , mesh = mesh'
+                        , model = mkTrans (-0.85) 0.85 !*! mkScale 0.10 0.12
+                        }
+
+                Left err -> return $ Left err
 
         Left err -> return $ Left err
 
@@ -47,6 +61,11 @@ render logo = do
     GL.glBindVertexArray (vao $ mesh logo)
 
     GL.setMatrix4 (modelLoc logo) (model logo)
+
+    GL.glActiveTexture (TextureUnit 0)
+    GL.glBindTexture Texture2D (logoTexture logo)
+    GL.glUniform1i (logoLoc logo) 0
+
     GL.drawTrianglesVector (indices $ mesh logo)
 
     GL.glBindVertexArray (VertexArrayObject 0)
